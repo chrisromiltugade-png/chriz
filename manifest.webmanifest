@@ -1,0 +1,19 @@
+{
+  "name": "A.Keopi Cafe POS",
+  "short_name": "A.Keopi POS",
+  "description": "A.Keopi Cafe Point of Sale",
+  "start_url": "./A.keopicafePOS.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#FDFBF7",
+  "theme_color": "#133824",
+  "orientation": "any",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

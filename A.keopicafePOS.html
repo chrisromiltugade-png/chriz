@@ -1,0 +1,3900 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#133824" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="A.Keopi POS" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="icon.svg" />
+  <title>A.Keopi Cafe — Point of Sale (POS)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Playfair Display', 'serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            cream: {
+              50: '#FDFBF7',
+              100: '#F6EDE0',
+              200: '#EBDEC9',
+              300: '#DEC9AA',
+            },
+            forest: {
+              700: '#1C4B32',
+              800: '#133824',
+              900: '#0C2618',
+            },
+            espresso: {
+              700: '#5A2D18',
+              800: '#421E0E',
+              900: '#2A1208',
+            }
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    /* Custom scrollbar for smooth POS tablet & desktop touch scrolling */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(120, 100, 80, 0.25);
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(120, 100, 80, 0.45);
+    }
+
+    /* Hide scrollbars on horizontal category strip while keeping scrollability */
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Thermal Receipt Print Styles */
+    @media print {
+      body * {
+        visibility: hidden !important;
+      }
+      #printable-receipt-area,
+      #printable-receipt-area * {
+        visibility: visible !important;
+      }
+      #printable-receipt-area {
+        position: fixed !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 58mm !important;
+        max-width: 80mm !important;
+        margin: 0 !important;
+        padding: 4mm !important;
+        background: #ffffff !important;
+        color: #000000 !important;
+        box-shadow: none !important;
+        border: none !important;
+        font-size: 11px !important;
+        line-height: 1.35 !important;
+      }
+      .no-print {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+<body class="bg-cream-100 text-espresso-900 dark:bg-stone-950 dark:text-stone-100 font-sans antialiased selection:bg-forest-700 selection:text-white overflow-x-hidden">
+
+  <!-- ==================== TOP NAVIGATION HEADER ==================== -->
+  <header class="sticky top-0 z-30 bg-cream-50/95 dark:bg-stone-900/95 backdrop-blur border-b border-cream-200 dark:border-stone-800 px-3 sm:px-5 py-2.5 shadow-sm">
+    <div class="max-w-[1600px] mx-auto flex flex-wrap items-center justify-between gap-2">
+      <!-- Brand Identity -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-forest-800 dark:bg-forest-700 text-cream-50 flex items-center justify-center shadow-md shrink-0">
+          <!-- Coffee Cup Inline SVG -->
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 8h1a4 4 0 010 8h-1M2 8h16v9a4 4 0 01-4 4H6a4 4 0 01-4-4V8z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 1v3M10 1v3M14 1v3" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-display font-extrabold text-lg sm:text-xl tracking-tight text-forest-800 dark:text-amber-200 leading-none">
+              A.Keopi Cafe
+            </h1>
+            <span class="hidden sm:inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-semibold bg-forest-800/10 text-forest-800 dark:bg-amber-400/15 dark:text-amber-300">
+              POS Terminal
+            </span>
+          </div>
+          <p id="live-clock" class="text-[11px] text-espresso-700/80 dark:text-stone-400 mt-0.5 font-medium">
+            Loading date & time...
+          </p>
+        </div>
+      </div>
+
+      <!-- Search Input (Desktop & Tablet) -->
+      <div class="order-3 lg:order-2 w-full lg:w-96 relative">
+        <span class="absolute inset-y-0 left-3 flex items-center text-stone-400 pointer-events-none">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path stroke-linecap="round" d="M21 21l-4.35-4.35"></path>
+          </svg>
+        </span>
+        <input
+          id="search-input"
+          type="text"
+          placeholder="Search drinks, rice meals, frappe, ramen..."
+          class="w-full pl-9 pr-9 py-2 rounded-xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 text-sm focus:outline-none focus:ring-2 focus:ring-forest-700 dark:focus:ring-amber-400 transition"
+        />
+        <button
+          id="clear-search-btn"
+          onclick="clearSearch()"
+          title="Clear search"
+          class="hidden absolute inset-y-0 right-2.5 flex items-center text-stone-400 hover:text-stone-700 dark:hover:text-stone-200"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="order-2 lg:order-3 flex items-center gap-1.5 sm:gap-2">
+        <!-- Today's Sales Quick Pill -->
+        <button
+          onclick="openHistoryModal()"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-stone-800 hover:bg-cream-200/70 dark:hover:bg-stone-700 border border-cream-300 dark:border-stone-700 text-xs sm:text-sm font-semibold transition shadow-sm"
+          title="Transaction History & Sales Summary"
+        >
+          <svg class="w-4 h-4 text-forest-700 dark:text-amber-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
+          </svg>
+          <span class="hidden sm:inline">Orders</span>
+          <span id="header-sales-badge" class="px-1.5 py-0.5 rounded-md bg-forest-800 text-white dark:bg-amber-500 dark:text-stone-950 text-[11px] font-bold">
+            ₱0
+          </span>
+        </button>
+
+        <!-- Manage Menu Button -->
+        <button
+          onclick="openManageMenuModal()"
+          class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white dark:bg-stone-800 hover:bg-cream-200/70 dark:hover:bg-stone-700 border border-cream-300 dark:border-stone-700 text-xs sm:text-sm font-semibold transition shadow-sm"
+          title="Add, Edit, or Reset Menu Items"
+        >
+          <svg class="w-4 h-4 text-espresso-700 dark:text-amber-300 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+          </svg>
+          <span class="hidden md:inline">Menu</span>
+        </button>
+
+        <!-- Light / Dark Theme Toggle -->
+        <button
+          id="theme-toggle-btn"
+          onclick="toggleTheme()"
+          class="p-2 rounded-xl bg-white dark:bg-stone-800 hover:bg-cream-200/70 dark:hover:bg-stone-700 border border-cream-300 dark:border-stone-700 text-espresso-800 dark:text-amber-300 transition shadow-sm"
+          title="Toggle Light / Dark Mode"
+        >
+          <!-- Sun Icon (shown in Dark Mode) -->
+          <svg id="icon-sun" class="hidden w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="5"></circle>
+            <path stroke-linecap="round" d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42" />
+          </svg>
+          <!-- Moon Icon (shown in Light Mode) -->
+          <svg id="icon-moon" class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ==================== MAIN WORKSPACE LAYOUT ==================== -->
+  <div class="max-w-[1600px] mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-68px)]">
+
+    <!-- LEFT / CENTER PANEL: CATEGORIES & MENU GRID -->
+    <main class="flex-1 flex flex-col min-w-0 pb-24 lg:pb-6">
+      <!-- Category Filter Tabs -->
+      <div class="sticky top-[106px] lg:top-[61px] z-20 bg-cream-100/95 dark:bg-stone-950/95 backdrop-blur border-b border-cream-200 dark:border-stone-800 px-3 sm:px-5 py-2.5">
+        <div id="category-tabs" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <!-- Populated dynamically via JS -->
+        </div>
+      </div>
+
+      <!-- Category Header Info & Quick Count -->
+      <div class="px-3 sm:px-5 pt-4 pb-2 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 id="active-category-title" class="text-lg sm:text-xl font-extrabold text-forest-800 dark:text-amber-200 tracking-tight">
+            All Menu Items
+          </h2>
+          <p id="active-category-subtitle" class="text-xs text-espresso-700/80 dark:text-stone-400">
+            Tap any item to choose size, flavor, or add-ons
+          </p>
+        </div>
+        <span id="visible-items-count" class="text-xs font-semibold px-2.5 py-1 rounded-full bg-cream-200/80 dark:bg-stone-800 text-espresso-800 dark:text-stone-300">
+          0 items
+        </span>
+      </div>
+
+      <!-- Menu Items Grid -->
+      <div id="menu-grid" class="px-3 sm:px-5 py-2 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+        <!-- Menu cards injected dynamically -->
+      </div>
+    </main>
+
+    <!-- RIGHT SIDEBAR (DESKTOP) / SLIDE-OVER DRAWER (MOBILE): CURRENT TICKET -->
+    <!-- Mobile Backdrop -->
+    <div
+      id="mobile-cart-backdrop"
+      onclick="toggleMobileCart(false)"
+      class="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity"
+    ></div>
+
+    <aside
+      id="cart-panel"
+      class="fixed inset-x-0 bottom-0 z-50 lg:static lg:z-auto lg:w-[400px] xl:w-[430px] shrink-0 bg-cream-50 dark:bg-stone-900 border-t lg:border-t-0 lg:border-l border-cream-200 dark:border-stone-800 rounded-t-3xl lg:rounded-none shadow-2xl lg:shadow-none flex flex-col max-h-[88vh] lg:max-h-[calc(100vh-61px)] lg:sticky lg:top-[61px] translate-y-full lg:translate-y-0 transition-transform duration-300 ease-out"
+    >
+      <!-- Mobile Drawer Handle -->
+      <div class="lg:hidden flex justify-center pt-2.5 pb-1" onclick="toggleMobileCart(false)">
+        <div class="w-12 h-1.5 rounded-full bg-stone-300 dark:bg-stone-700"></div>
+      </div>
+
+      <!-- Ticket Header -->
+      <div class="px-4 py-3 border-b border-cream-200 dark:border-stone-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <h3 class="font-extrabold text-base text-forest-800 dark:text-amber-200">Current Order</h3>
+          <span id="cart-item-badge" class="px-2 py-0.5 rounded-full text-xs font-bold bg-forest-800 text-white dark:bg-amber-500 dark:text-stone-950">
+            0
+          </span>
+        </div>
+        <div class="flex items-center gap-2">
+          <button
+            onclick="clearCart()"
+            class="text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/40 px-2.5 py-1.5 rounded-lg transition"
+          >
+            Clear All
+          </button>
+          <button
+            onclick="toggleMobileCart(false)"
+            class="lg:hidden p-1.5 rounded-lg text-stone-500 hover:bg-stone-200 dark:hover:bg-stone-800"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Order Type, Delivery Fee & Customer/Table Meta -->
+      <div class="px-4 py-2.5 bg-cream-100/70 dark:bg-stone-950/50 border-b border-cream-200 dark:border-stone-800 space-y-2">
+        <div class="grid grid-cols-2 gap-1.5 p-1 rounded-xl bg-cream-200/80 dark:bg-stone-800">
+          <button
+            id="btn-order-dinein"
+            onclick="setOrderType('Dine-In')"
+            class="py-1.5 rounded-lg text-xs font-bold transition bg-forest-800 text-white shadow-xs"
+          >
+            🍽️ Dine-In
+          </button>
+          <button
+            id="btn-order-takeout"
+            onclick="setOrderType('Take-Out')"
+            class="py-1.5 rounded-lg text-xs font-bold transition text-espresso-800 dark:text-stone-300"
+          >
+            🛍️ Take-Out
+          </button>
+        </div>
+
+        <!-- Delivery Fee Toggle + Textbox -->
+        <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700">
+          <label for="delivery-fee-checkbox" class="flex items-center gap-2 text-xs font-bold text-espresso-900 dark:text-stone-200 cursor-pointer select-none">
+            <input
+              id="delivery-fee-checkbox"
+              type="checkbox"
+              onchange="toggleDeliveryFee()"
+              class="w-4 h-4 rounded accent-[#133824] cursor-pointer"
+            />
+            <span>🛵 Delivery Fee</span>
+          </label>
+          <div class="flex items-center gap-1">
+            <span class="text-xs font-extrabold text-forest-800 dark:text-amber-300">₱</span>
+            <input
+              id="delivery-fee-input"
+              type="number"
+              min="0"
+              step="1"
+              disabled
+              placeholder="0"
+              oninput="handleDeliveryFeeInput()"
+              class="w-24 px-2.5 py-1 rounded-lg bg-cream-100 dark:bg-stone-900 border border-cream-300 dark:border-stone-700 text-xs font-extrabold text-right disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-forest-700 dark:focus:ring-amber-400"
+            />
+          </div>
+        </div>
+
+        <input
+          id="customer-note-input"
+          type="text"
+          placeholder="Customer Name, Address or Table # (Optional)"
+          class="w-full px-3 py-1.5 rounded-xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 text-xs focus:outline-none focus:ring-2 focus:ring-forest-700 dark:focus:ring-amber-400"
+        />
+      </div>
+
+      <!-- Cart Items List -->
+      <div id="cart-items-container" class="flex-1 overflow-y-auto px-4 py-3 space-y-2.5">
+        <!-- Cart items rendered dynamically -->
+      </div>
+
+      <!-- Cart Summary & Checkout Trigger -->
+      <div class="p-4 border-t border-cream-200 dark:border-stone-800 bg-white dark:bg-stone-900 space-y-3">
+        <div class="space-y-1 text-sm">
+          <div class="flex justify-between text-stone-500 dark:text-stone-400 text-xs">
+            <span>Subtotal</span>
+            <span id="cart-subtotal">₱0.00</span>
+          </div>
+          <div id="cart-delivery-row" class="hidden justify-between text-forest-700 dark:text-amber-300 text-xs font-semibold">
+            <span>Delivery Fee</span>
+            <span id="cart-delivery-fee">₱0.00</span>
+          </div>
+          <div class="flex justify-between items-baseline pt-1 border-t border-dashed border-cream-300 dark:border-stone-700">
+            <span class="font-bold text-base">Total Payable</span>
+            <span id="cart-total" class="font-extrabold text-2xl text-forest-800 dark:text-amber-300">₱0.00</span>
+          </div>
+        </div>
+
+        <button
+          id="checkout-btn"
+          onclick="openCheckoutModal()"
+          disabled
+          class="w-full py-3.5 px-4 rounded-2xl bg-forest-800 hover:bg-forest-700 disabled:bg-stone-300 dark:disabled:bg-stone-800 disabled:text-stone-500 text-white font-extrabold text-sm sm:text-base shadow-lg shadow-forest-900/15 transition flex items-center justify-center gap-2 cursor-pointer disabled:cursor-not-allowed"
+        >
+          <span>Proceed to Payment</span>
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+          </svg>
+        </button>
+      </div>
+    </aside>
+  </div>
+
+  <!-- MOBILE FLOATING BOTTOM CART BAR -->
+  <div class="lg:hidden fixed bottom-3 inset-x-3 z-30">
+    <button
+      onclick="toggleMobileCart(true)"
+      class="w-full py-3 px-4 rounded-2xl bg-forest-800 text-white shadow-xl shadow-black/25 flex items-center justify-between border border-forest-700"
+    >
+      <div class="flex items-center gap-2.5">
+        <span id="mobile-bar-count" class="px-2.5 py-0.5 rounded-full bg-amber-400 text-stone-950 font-extrabold text-xs">
+          0
+        </span>
+        <span class="font-bold text-sm">View Current Order</span>
+      </div>
+      <span id="mobile-bar-total" class="font-extrabold text-base text-amber-300">₱0.00</span>
+    </button>
+  </div>
+
+  <!-- ==================== MODAL 1: ITEM VARIANT & ADD-ONS SELECTOR ==================== -->
+  <div id="item-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
+    <div class="bg-cream-50 dark:bg-stone-900 border border-cream-200 dark:border-stone-800 rounded-3xl w-full max-w-lg max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-fadeIn">
+      <!-- Modal Header -->
+      <div class="px-5 py-4 border-b border-cream-200 dark:border-stone-800 flex items-start justify-between gap-3 bg-white dark:bg-stone-900">
+        <div>
+          <span id="modal-item-category" class="text-[11px] font-bold uppercase tracking-wider text-forest-700 dark:text-amber-400">
+            Category
+          </span>
+          <h3 id="modal-item-name" class="text-xl font-extrabold text-espresso-900 dark:text-white leading-snug">
+            Item Name
+          </h3>
+          <p id="modal-item-desc" class="text-xs text-stone-500 dark:text-stone-400 mt-0.5 hidden"></p>
+        </div>
+        <button
+          onclick="closeItemModal()"
+          class="p-2 rounded-xl bg-cream-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-cream-200 dark:hover:bg-stone-700 transition"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Modal Scrollable Options -->
+      <div class="p-5 overflow-y-auto space-y-5 flex-1">
+        <!-- Variants / Sizes -->
+        <div id="modal-variants-section">
+          <label class="block text-xs font-extrabold uppercase tracking-wider text-espresso-800 dark:text-stone-300 mb-2">
+            Select Size / Option <span class="text-red-500">*</span>
+          </label>
+          <div id="modal-variants-grid" class="grid grid-cols-2 gap-2">
+            <!-- Variant buttons injected dynamically -->
+          </div>
+        </div>
+
+        <!-- Dynamic Sub-Options (e.g., Soda Flavor for Rice Meal W/ Drinks, Fries Flavor, Mini Donut Flavors) -->
+        <div id="modal-flavors-section" class="hidden">
+          <div class="flex items-center justify-between mb-2">
+            <label id="modal-flavors-label" class="block text-xs font-extrabold uppercase tracking-wider text-espresso-800 dark:text-stone-300">
+              Choose Flavor
+            </label>
+            <span id="modal-flavors-hint" class="text-[11px] font-semibold text-forest-700 dark:text-amber-400"></span>
+          </div>
+          <div id="modal-flavors-grid" class="flex flex-wrap gap-2">
+            <!-- Flavor chips injected dynamically -->
+          </div>
+        </div>
+
+        <!-- Category / Item Add-Ons -->
+        <div id="modal-addons-section" class="hidden">
+          <label class="block text-xs font-extrabold uppercase tracking-wider text-espresso-800 dark:text-stone-300 mb-2">
+            Optional Add-Ons
+          </label>
+          <div id="modal-addons-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <!-- Add-on checkboxes injected dynamically -->
+          </div>
+        </div>
+
+        <!-- Special Instructions -->
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wider text-espresso-800 dark:text-stone-300 mb-1.5">
+            Kitchen / Barista Note (Optional)
+          </label>
+          <input
+            id="modal-item-note"
+            type="text"
+            placeholder="e.g., Less ice, 50% sugar, extra spicy, no veggies..."
+            class="w-full px-3.5 py-2.5 rounded-xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 text-sm focus:outline-none focus:ring-2 focus:ring-forest-700 dark:focus:ring-amber-400"
+          />
+        </div>
+      </div>
+
+      <!-- Modal Footer: Quantity & Add/Update Order -->
+      <div class="p-4 border-t border-cream-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex items-center gap-3">
+        <!-- Quantity Stepper -->
+        <div class="flex items-center bg-cream-100 dark:bg-stone-800 rounded-2xl p-1 border border-cream-300 dark:border-stone-700">
+          <button
+            onclick="adjustModalQty(-1)"
+            class="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-lg hover:bg-white dark:hover:bg-stone-700 transition"
+          >
+            −
+          </button>
+          <span id="modal-qty-display" class="w-10 text-center font-extrabold text-base">1</span>
+          <button
+            onclick="adjustModalQty(1)"
+            class="w-10 h-10 rounded-xl flex items-center justify-center font-extrabold text-lg hover:bg-white dark:hover:bg-stone-700 transition"
+          >
+            +
+          </button>
+        </div>
+
+        <!-- Confirm Add / Update Button -->
+        <button
+          id="modal-add-btn"
+          onclick="confirmAddItemToCart()"
+          class="flex-1 py-3.5 px-4 rounded-2xl bg-forest-800 hover:bg-forest-700 text-white font-extrabold text-sm sm:text-base shadow-lg transition flex items-center justify-between"
+        >
+          <span id="modal-add-btn-label">Add to Order</span>
+          <span id="modal-total-price">₱0</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 2: PAYMENT & CHECKOUT ==================== -->
+  <div id="checkout-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
+    <div class="bg-cream-50 dark:bg-stone-900 border border-cream-200 dark:border-stone-800 rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-cream-200 dark:border-stone-800 flex items-center justify-between bg-white dark:bg-stone-900">
+        <h3 class="text-lg font-extrabold text-forest-800 dark:text-amber-200">Complete Payment</h3>
+        <button
+          onclick="closeCheckoutModal()"
+          class="p-2 rounded-xl bg-cream-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300 hover:bg-cream-200 dark:hover:bg-stone-700"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <div class="p-5 space-y-4">
+        <!-- Total Amount Banner -->
+        <div class="p-4 rounded-2xl bg-forest-800 text-white text-center shadow-inner">
+          <p class="text-xs uppercase tracking-wider text-cream-200 font-semibold">Total Amount Due</p>
+          <p id="checkout-total-display" class="text-3xl font-extrabold mt-1">₱0.00</p>
+          <p id="checkout-order-meta" class="text-xs text-amber-300 mt-1">Dine-In</p>
+        </div>
+
+        <!-- Payment Method Selection -->
+        <div>
+          <label class="block text-xs font-extrabold uppercase tracking-wider text-espresso-800 dark:text-stone-300 mb-2">
+            Select Payment Method
+          </label>
+          <div class="grid grid-cols-3 gap-2">
+            <button
+              id="pay-method-Cash"
+              onclick="selectPaymentMethod('Cash')"
+              class="py-3 px-2 rounded-2xl border-2 border-forest-700 bg-forest-800/10 dark:bg-amber-400/15 dark:border-amber-400 font-extrabold text-xs sm:text-sm flex flex-col items-center gap-1 transition"
+            >
+              <span class="text-lg">💵</span>
+              <span>Cash</span>
+            </button>
+            <button
+              id="pay-method-GCash"
+              onclick="selectPaymentMethod('GCash')"
+              class="py-3 px-2 rounded-2xl border-2 border-cream-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-extrabold text-xs sm:text-sm flex flex-col items-center gap-1 transition"
+            >
+              <span class="text-lg">📱</span>
+              <span>GCash</span>
+            </button>
+            <button
+              id="pay-method-Maya"
+              onclick="selectPaymentMethod('Maya')"
+              class="py-3 px-2 rounded-2xl border-2 border-cream-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-extrabold text-xs sm:text-sm flex flex-col items-center gap-1 transition"
+            >
+              <span class="text-lg">💳</span>
+              <span>Maya</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Cash Tendered Section -->
+        <div id="cash-payment-section" class="space-y-3">
+          <div>
+            <label class="block text-xs font-extrabold uppercase tracking-wider text-espresso-800 dark:text-stone-300 mb-1.5">
+              Cash Received (₱)
+            </label>
+            <input
+              id="cash-tendered-input"
+              type="number"
+              min="0"
+              step="1"
+              placeholder="Enter cash amount..."
+              oninput="calculateChange()"
+              class="w-full px-4 py-3 rounded-2xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 text-lg font-extrabold focus:outline-none focus:ring-2 focus:ring-forest-700 dark:focus:ring-amber-400"
+            />
+          </div>
+
+          <!-- Quick Bill Denominations -->
+          <div class="grid grid-cols-4 gap-1.5">
+            <button type="button" onclick="setExactCash()" class="py-2 rounded-xl bg-cream-200 dark:bg-stone-800 hover:bg-cream-300 dark:hover:bg-stone-700 text-xs font-bold">
+              Exact
+            </button>
+            <button type="button" onclick="addCashBill(100)" class="py-2 rounded-xl bg-cream-200 dark:bg-stone-800 hover:bg-cream-300 dark:hover:bg-stone-700 text-xs font-bold">
+              ₱100
+            </button>
+            <button type="button" onclick="addCashBill(500)" class="py-2 rounded-xl bg-cream-200 dark:bg-stone-800 hover:bg-cream-300 dark:hover:bg-stone-700 text-xs font-bold">
+              ₱500
+            </button>
+            <button type="button" onclick="addCashBill(1000)" class="py-2 rounded-xl bg-cream-200 dark:bg-stone-800 hover:bg-cream-300 dark:hover:bg-stone-700 text-xs font-bold">
+              ₱1,000
+            </button>
+          </div>
+
+          <!-- Change Due Box -->
+          <div class="p-3 rounded-2xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 flex items-center justify-between">
+            <span class="text-xs font-bold uppercase text-stone-500 dark:text-stone-400">Change Due</span>
+            <span id="checkout-change-display" class="text-xl font-extrabold text-forest-700 dark:text-emerald-400">₱0.00</span>
+          </div>
+        </div>
+
+        <!-- E-Wallet Reference Number (for GCash / Maya) -->
+        <div id="ewallet-payment-section" class="hidden space-y-2">
+          <label class="block text-xs font-extrabold uppercase tracking-wider text-espresso-800 dark:text-stone-300">
+            Reference No. (Last 4 digits / Optional)
+          </label>
+          <input
+            id="ewallet-ref-input"
+            type="text"
+            placeholder="e.g., Ref #1234"
+            class="w-full px-4 py-2.5 rounded-2xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-forest-700"
+          />
+        </div>
+
+        <p id="checkout-error-msg" class="hidden text-xs font-bold text-red-600 dark:text-red-400 text-center"></p>
+
+        <button
+          onclick="finalizeOrder()"
+          class="w-full py-3.5 px-4 rounded-2xl bg-forest-800 hover:bg-forest-700 text-white font-extrabold text-base shadow-lg transition"
+        >
+          Confirm & Print Receipt
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 3: PRINTABLE THERMAL RECEIPT ==================== -->
+  <div id="receipt-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-black/65 backdrop-blur-xs">
+    <div class="bg-cream-50 dark:bg-stone-900 border border-cream-200 dark:border-stone-800 rounded-3xl w-full max-w-sm max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-3.5 border-b border-cream-200 dark:border-stone-800 flex items-center justify-between bg-white dark:bg-stone-900 no-print">
+        <span class="font-extrabold text-sm text-forest-800 dark:text-amber-200">Order Receipt</span>
+        <button
+          onclick="closeReceiptModal()"
+          class="p-1.5 rounded-xl bg-cream-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Thermal Paper Preview -->
+      <div class="p-4 overflow-y-auto flex-1 flex justify-center bg-stone-200/70 dark:bg-stone-950">
+        <div
+          id="printable-receipt-area"
+          class="w-full max-w-[300px] bg-white text-stone-900 p-5 shadow-md font-mono text-xs leading-relaxed border border-stone-200"
+        >
+          <!-- Receipt content populated dynamically -->
+        </div>
+      </div>
+
+      <!-- Receipt Actions -->
+      <div class="p-4 border-t border-cream-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex gap-2 no-print">
+        <button
+          onclick="window.print()"
+          class="flex-1 py-3 px-4 rounded-2xl bg-forest-800 hover:bg-forest-700 text-white font-extrabold text-sm flex items-center justify-center gap-2 shadow transition"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          <span>Print Receipt</span>
+        </button>
+        <button
+          onclick="closeReceiptModal()"
+          class="py-3 px-4 rounded-2xl bg-cream-200 dark:bg-stone-800 text-espresso-900 dark:text-stone-200 font-bold text-sm hover:bg-cream-300 dark:hover:bg-stone-700 transition"
+        >
+          New Order
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 4: TRANSACTION HISTORY & DAILY SALES ==================== -->
+  <div id="history-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
+    <div class="bg-cream-50 dark:bg-stone-900 border border-cream-200 dark:border-stone-800 rounded-3xl w-full max-w-3xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-cream-200 dark:border-stone-800 flex items-center justify-between bg-white dark:bg-stone-900">
+        <div>
+          <h3 class="text-lg font-extrabold text-forest-800 dark:text-amber-200">Sales & Transaction History</h3>
+          <p class="text-xs text-stone-500 dark:text-stone-400">Saved locally in browser storage</p>
+        </div>
+        <button
+          onclick="closeHistoryModal()"
+          class="p-2 rounded-xl bg-cream-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Summary KPIs -->
+      <div class="p-4 sm:p-5 bg-cream-100/70 dark:bg-stone-950/60 border-b border-cream-200 dark:border-stone-800">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+          <div class="col-span-2 sm:col-span-1 p-3 rounded-2xl bg-forest-800 text-white">
+            <p class="text-[11px] uppercase font-semibold text-cream-200">Total Sales</p>
+            <p id="stat-total-sales" class="text-lg font-extrabold mt-0.5">₱0.00</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-white dark:bg-stone-800 border border-cream-200 dark:border-stone-700">
+            <p class="text-[11px] uppercase font-semibold text-stone-500 dark:text-stone-400">Orders</p>
+            <p id="stat-order-count" class="text-lg font-extrabold mt-0.5">0</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-white dark:bg-stone-800 border border-cream-200 dark:border-stone-700">
+            <p class="text-[11px] uppercase font-semibold text-stone-500 dark:text-stone-400">Cash</p>
+            <p id="stat-cash-sales" class="text-base font-extrabold mt-0.5 text-emerald-700 dark:text-emerald-400">₱0</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-white dark:bg-stone-800 border border-cream-200 dark:border-stone-700">
+            <p class="text-[11px] uppercase font-semibold text-stone-500 dark:text-stone-400">GCash</p>
+            <p id="stat-gcash-sales" class="text-base font-extrabold mt-0.5 text-blue-600 dark:text-blue-400">₱0</p>
+          </div>
+          <div class="p-3 rounded-2xl bg-white dark:bg-stone-800 border border-cream-200 dark:border-stone-700">
+            <p class="text-[11px] uppercase font-semibold text-stone-500 dark:text-stone-400">Maya</p>
+            <p id="stat-maya-sales" class="text-base font-extrabold mt-0.5 text-teal-600 dark:text-teal-400">₱0</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Orders List -->
+      <div id="history-list-container" class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2.5">
+        <!-- Past receipts injected dynamically -->
+      </div>
+
+      <!-- Footer Actions -->
+      <div class="p-4 border-t border-cream-200 dark:border-stone-800 bg-white dark:bg-stone-900 flex flex-wrap items-center justify-between gap-2">
+        <button
+          onclick="exportTransactionsCSV()"
+          class="px-4 py-2.5 rounded-xl bg-forest-800 text-white text-xs font-bold hover:bg-forest-700 transition"
+        >
+          Export Sales CSV
+        </button>
+        <div id="clear-history-confirm-group" class="flex items-center gap-2">
+          <button
+            id="btn-clear-history-init"
+            onclick="promptClearHistory()"
+            class="px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900 text-xs font-bold hover:bg-red-100 transition"
+          >
+            Clear History
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== MODAL 5: MANAGE MENU ==================== -->
+  <div id="manage-menu-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs">
+    <div class="bg-cream-50 dark:bg-stone-900 border border-cream-200 dark:border-stone-800 rounded-3xl w-full max-w-4xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="px-5 py-4 border-b border-cream-200 dark:border-stone-800 flex items-center justify-between bg-white dark:bg-stone-900">
+        <div>
+          <h3 class="text-lg font-extrabold text-forest-800 dark:text-amber-200">Manage A.Keopi Menu</h3>
+          <p class="text-xs text-stone-500 dark:text-stone-400">Add new items, toggle availability (Sold Out), or edit prices</p>
+        </div>
+        <button
+          onclick="closeManageMenuModal()"
+          class="p-2 rounded-xl bg-cream-100 dark:bg-stone-800 text-stone-600 dark:text-stone-300"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Add / Edit Form -->
+      <div class="p-4 sm:p-5 bg-cream-100/80 dark:bg-stone-950/60 border-b border-cream-200 dark:border-stone-800">
+        <form id="menu-item-form" onsubmit="saveMenuItemForm(event)" class="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-end">
+          <input type="hidden" id="edit-item-id" />
+          <div class="sm:col-span-4">
+            <label class="block text-[11px] font-bold uppercase mb-1">Item Name</label>
+            <input
+              id="form-item-name"
+              type="text"
+              required
+              placeholder="e.g., Iced Pistachio Latte"
+              class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 text-xs font-semibold"
+            />
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block text-[11px] font-bold uppercase mb-1">Category</label>
+            <select
+              id="form-item-category"
+              class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 text-xs font-semibold"
+            ></select>
+          </div>
+          <div class="sm:col-span-3">
+            <label class="block text-[11px] font-bold uppercase mb-1">Variants (Name:Price)</label>
+            <input
+              id="form-item-variants"
+              type="text"
+              required
+              placeholder="16oz:115, 22oz:130"
+              class="w-full px-3 py-2 rounded-xl bg-white dark:bg-stone-800 border border-cream-300 dark:border-stone-700 text-xs font-semibold"
+            />
+          </div>
+          <div class="sm:col-span-2 flex gap-1.5">
+            <button
+              type="submit"
+              id="form-submit-btn"
+              class="flex-1 py-2 px-3 rounded-xl bg-forest-800 hover:bg-forest-700 text-white text-xs font-extrabold transition"
+            >
+              Save Item
+            </button>
+            <button
+              type="button"
+              onclick="resetMenuItemForm()"
+              class="py-2 px-2.5 rounded-xl bg-stone-200 dark:bg-stone-700 text-xs font-bold"
+              title="Cancel Edit"
+            >
+              ✕
+            </button>
+          </div>
+        </form>
+      </div>
+
+      <!-- Existing Menu Items Filter & List -->
+      <div class="px-5 py-2.5 bg-white dark:bg-stone-900 border-b border-cream-200 dark:border-stone-800 flex items-center justify-between gap-2">
+        <input
+          id="manage-search-input"
+          type="text"
+          oninput="renderManageMenuList()"
+          placeholder="Filter menu items to edit..."
+          class="w-full max-w-xs px-3 py-1.5 rounded-xl bg-cream-100 dark:bg-stone-800 text-xs border border-cream-300 dark:border-stone-700"
+        />
+        <div id="reset-menu-confirm-group">
+          <button
+            onclick="promptResetDefaultMenu()"
+            class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-xs font-bold hover:bg-amber-200 transition"
+          >
+            Reset Default Menu
+          </button>
+        </div>
+      </div>
+
+      <div id="manage-menu-list" class="flex-1 overflow-y-auto p-4 sm:p-5 space-y-2">
+        <!-- Menu items editor rows injected dynamically -->
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST NOTIFICATION BANNER -->
+  <div
+    id="toast-banner"
+    class="fixed top-16 right-4 z-[60] pointer-events-none opacity-0 translate-y-[-10px] transition-all duration-200 bg-forest-800 dark:bg-amber-500 text-white dark:text-stone-950 px-4 py-2.5 rounded-2xl shadow-xl font-bold text-xs flex items-center gap-2"
+  >
+    <span>✓</span>
+    <span id="toast-message">Added to order</span>
+  </div>
+
+  <!-- ==================== JAVASCRIPT APPLICATION LOGIC ==================== -->
+  <script>
+    // =========================================================================
+    // 1. COMPLETE A.KEOPI CAFE MENU DATABASE (ALL 5 MENU BOARDS)
+    // =========================================================================
+    const COFFEE_DRINK_ADDONS = [
+      { name: 'Espresso Shot', price: 35 },
+      { name: 'Flavored Syrup', price: 15 },
+      { name: 'Sauce / Drizzle', price: 15 },
+      { name: 'Whipcream', price: 25 },
+      { name: 'Sea Salt Cream', price: 25 },
+      { name: 'Sub Oat', price: 35 },
+      { name: 'Nata / Coffeejelly', price: 15 },
+      { name: 'Sub Breve Milk', price: 40 },
+      { name: 'Coldfoam', price: 25 }
+    ];
+
+    const SODA_FRAPPE_ADDONS = [
+      { name: 'Nata', price: 15 },
+      { name: 'Coffeejelly', price: 15 },
+      { name: 'Whipcream', price: 25 },
+      { name: 'Espresso Shot', price: 35 },
+      { name: 'Flavored Syrup', price: 15 },
+      { name: 'Sauce / Drizzle', price: 15 }
+    ];
+
+    const RICE_MEAL_ADDONS = [
+      { name: 'Spam', price: 20 },
+      { name: 'Egg', price: 20 },
+      { name: 'Bacon 2pcs', price: 30 },
+      { name: 'Rice', price: 25 }
+    ];
+
+    const NOODLES_ADDONS = [
+      { name: 'Spam', price: 20 },
+      { name: 'Egg', price: 20 },
+      { name: 'Bacon 2pcs', price: 30 },
+      { name: 'Cheese Sauce', price: 25 },
+      { name: '1 Pack Nori', price: 40 }
+    ];
+
+    const BURGER_SANDWICH_ADDONS = [
+      { name: 'Spam', price: 20 },
+      { name: 'Egg', price: 20 },
+      { name: 'Bacon 2pcs', price: 30 },
+      { name: 'Cheese Slice', price: 15 }
+    ];
+
+    const FRIES_SNACKS_ADDONS = [
+      { name: 'Bacon Bits', price: 30 },
+      { name: 'Cheese Sauce', price: 30 }
+    ];
+
+    const WAFFLE_ADDONS = [
+      { name: 'Spread', price: 20 },
+      { name: 'Toppings', price: 10 }
+    ];
+
+    const SODA_SERIES_FLAVORS = [
+      'Blueberry Soda',
+      'Lychee Soda',
+      'GreenApple Soda',
+      'Strawberry Soda',
+      'Rootbeer Soda',
+      'Bubble Gum Soda',
+      'Lemon Soda'
+    ];
+
+    const FRIES_FLAVORS = ['Cheese', 'BBQ', 'Sourcream'];
+
+    const MINI_DONUT_FLAVORS = [
+      'Choco Mallows',
+      'Choco Almond',
+      'Nutella Oreo',
+      'Nutella Mallows',
+      'Nutella Almonds',
+      'Biscoff Oreo',
+      'Biscoff Almonds',
+      'Matcha Oreo',
+      'Matcha Almonds',
+      'Nutella Nips'
+    ];
+
+    const CATEGORIES = [
+      'All',
+      'Classic Coffee',
+      'Special Coffee',
+      'Strawberry & Matcha',
+      'Non-Coffee',
+      'Soda, Frizz & Refresher',
+      'Frappe Series',
+      'Rice Meal',
+      'Korean Noodles',
+      'Burger & Sandwich',
+      'Fries & Snacks',
+      'Croffles, Donuts & Waffles'
+    ];
+
+    const DEFAULT_MENU_ITEMS = [
+      // ==================== 1. CLASSIC COFFEE ====================
+      {
+        id: 'cc-americano',
+        category: 'Classic Coffee',
+        name: 'Americano',
+        variants: [
+          { label: 'Hot 12oz', price: 80 },
+          { label: 'Hot 16oz', price: 95 },
+          { label: 'Iced 16oz', price: 80 },
+          { label: 'Iced 22oz', price: 95 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'cc-cafelatte',
+        category: 'Classic Coffee',
+        name: 'Cafe Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 90 },
+          { label: 'Hot 16oz', price: 110 },
+          { label: 'Iced 16oz', price: 90 },
+          { label: 'Iced 22oz', price: 105 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'cc-caramelmacchiato',
+        category: 'Classic Coffee',
+        name: 'Caramel Macchiato',
+        variants: [
+          { label: 'Hot 12oz', price: 95 },
+          { label: 'Hot 16oz', price: 115 },
+          { label: 'Iced 16oz', price: 95 },
+          { label: 'Iced 22oz', price: 110 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'cc-frenchvanilla',
+        category: 'Classic Coffee',
+        name: 'French Vanilla',
+        variants: [
+          { label: 'Hot 12oz', price: 95 },
+          { label: 'Hot 16oz', price: 115 },
+          { label: 'Iced 16oz', price: 95 },
+          { label: 'Iced 22oz', price: 110 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'cc-spanishlatte',
+        category: 'Classic Coffee',
+        name: 'Spanish Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 95 },
+          { label: 'Hot 16oz', price: 115 },
+          { label: 'Iced 16oz', price: 95 },
+          { label: 'Iced 22oz', price: 110 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'cc-saltedcaramel',
+        category: 'Classic Coffee',
+        name: 'Salted Caramel',
+        variants: [
+          { label: 'Hot 12oz', price: 95 },
+          { label: 'Hot 16oz', price: 115 },
+          { label: 'Iced 16oz', price: 95 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'cc-whitemocha',
+        category: 'Classic Coffee',
+        name: 'White Mocha',
+        variants: [
+          { label: 'Hot 12oz', price: 100 },
+          { label: 'Hot 16oz', price: 115 },
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'cc-darkmochalatte',
+        category: 'Classic Coffee',
+        name: 'Dark Mocha Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 100 },
+          { label: 'Hot 16oz', price: 110 },
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'cc-hazelnutmochalatte',
+        category: 'Classic Coffee',
+        name: 'Hazelnut Mocha Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 100 },
+          { label: 'Hot 16oz', price: 110 },
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+
+      // ==================== 2. SPECIAL COFFEE ====================
+      {
+        id: 'sc-seasaltlatte',
+        category: 'Special Coffee',
+        name: 'Sea Salt Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 105 },
+          { label: 'Hot 16oz', price: 120 },
+          { label: 'Iced 16oz', price: 105 },
+          { label: 'Iced 22oz', price: 120 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sc-toffeecaramel',
+        category: 'Special Coffee',
+        name: 'Toffee Caramel Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 105 },
+          { label: 'Hot 16oz', price: 120 },
+          { label: 'Iced 16oz', price: 105 },
+          { label: 'Iced 22oz', price: 120 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sc-whitemacadamia',
+        category: 'Special Coffee',
+        name: 'White Macadamia',
+        variants: [
+          { label: 'Hot 12oz', price: 105 },
+          { label: 'Hot 16oz', price: 120 },
+          { label: 'Iced 16oz', price: 105 },
+          { label: 'Iced 22oz', price: 120 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sc-roastedalmond',
+        category: 'Special Coffee',
+        name: 'Roasted Almond',
+        variants: [
+          { label: 'Hot 12oz', price: 110 },
+          { label: 'Hot 16oz', price: 125 },
+          { label: 'Iced 16oz', price: 110 },
+          { label: 'Iced 22oz', price: 125 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sc-biscofflatte',
+        category: 'Special Coffee',
+        name: 'Biscoff Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 110 },
+          { label: 'Hot 16oz', price: 125 },
+          { label: 'Iced 16oz', price: 110 },
+          { label: 'Iced 22oz', price: 125 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sc-cinnamoncream',
+        category: 'Special Coffee',
+        name: 'Cinnamon Cream',
+        variants: [
+          { label: 'Hot 12oz', price: 110 },
+          { label: 'Hot 16oz', price: 125 },
+          { label: 'Iced 16oz', price: 110 },
+          { label: 'Iced 22oz', price: 125 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sc-matchaespresso',
+        category: 'Special Coffee',
+        name: 'Matcha Espresso',
+        variants: [
+          { label: 'Hot 12oz', price: 110 },
+          { label: 'Hot 16oz', price: 125 },
+          { label: 'Iced 16oz', price: 110 },
+          { label: 'Iced 22oz', price: 125 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sc-spanishoatlatte',
+        category: 'Special Coffee',
+        name: 'Spanish Oat Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 125 },
+          { label: 'Hot 16oz', price: 150 },
+          { label: 'Iced 16oz', price: 125 },
+          { label: 'Iced 22oz', price: 150 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sc-baristablend',
+        category: 'Special Coffee',
+        name: 'Barista Blend (Strong)',
+        description: 'Iced specialty strong blend',
+        variants: [
+          { label: 'Iced 16oz', price: 125 },
+          { label: 'Iced 22oz', price: 150 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+
+      // ==================== 3. STRAWBERRY & MATCHA ====================
+      {
+        id: 'sm-strawberrymilk',
+        category: 'Strawberry & Matcha',
+        name: 'Strawberry Milk',
+        variants: [
+          { label: 'Iced 16oz', price: 90 },
+          { label: 'Iced 22oz', price: 105 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sm-chocoberry',
+        category: 'Strawberry & Matcha',
+        name: 'Choco Berry',
+        variants: [
+          { label: 'Iced 16oz', price: 95 },
+          { label: 'Iced 22oz', price: 110 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sm-berrymatcha',
+        category: 'Strawberry & Matcha',
+        name: 'Berry Matcha',
+        variants: [
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sm-biscoffmatcha',
+        category: 'Strawberry & Matcha',
+        name: 'Biscoff Matcha',
+        variants: [
+          { label: 'Iced 16oz', price: 110 },
+          { label: 'Iced 22oz', price: 125 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sm-matchalatte',
+        category: 'Strawberry & Matcha',
+        name: 'Matcha Latte',
+        variants: [
+          { label: 'Hot 12oz', price: 100 },
+          { label: 'Hot 16oz', price: 110 },
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 110 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sm-whitechocomatcha',
+        category: 'Strawberry & Matcha',
+        name: 'White Choco Matcha',
+        variants: [
+          { label: 'Hot 12oz', price: 110 },
+          { label: 'Hot 16oz', price: 120 },
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'sm-seasaltmatcha',
+        category: 'Strawberry & Matcha',
+        name: 'Sea Salt Matcha',
+        variants: [
+          { label: 'Hot 12oz', price: 110 },
+          { label: 'Hot 16oz', price: 120 },
+          { label: 'Iced 16oz', price: 110 },
+          { label: 'Iced 22oz', price: 125 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+
+      // ==================== 4. NON-COFFEE ====================
+      {
+        id: 'nc-mangomilk',
+        category: 'Non-Coffee',
+        name: 'Mango Milk',
+        variants: [
+          { label: 'Iced 16oz', price: 90 },
+          { label: 'Iced 22oz', price: 100 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'nc-blueberrymilk',
+        category: 'Non-Coffee',
+        name: 'Blueberry Milk',
+        variants: [
+          { label: 'Iced 16oz', price: 90 },
+          { label: 'Iced 22oz', price: 100 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'nc-hersheychocolate',
+        category: 'Non-Coffee',
+        name: 'Hershey Chocolate',
+        variants: [
+          { label: 'Hot 12oz', price: 100 },
+          { label: 'Hot 16oz', price: 115 },
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'nc-chocolatefloat',
+        category: 'Non-Coffee',
+        name: 'Chocolate Float',
+        variants: [
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'nc-oreomilk',
+        category: 'Non-Coffee',
+        name: 'Oreo Milk',
+        variants: [
+          { label: 'Iced 16oz', price: 95 },
+          { label: 'Iced 22oz', price: 110 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'nc-biscoffmilk',
+        category: 'Non-Coffee',
+        name: 'Biscoff Milk',
+        variants: [
+          { label: 'Iced 16oz', price: 110 },
+          { label: 'Iced 22oz', price: 125 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'nc-ubecloud',
+        category: 'Non-Coffee',
+        name: 'Ube Cloud',
+        variants: [
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'nc-thaimilktea',
+        category: 'Non-Coffee',
+        name: 'Thai Milktea',
+        variants: [
+          { label: 'Hot 12oz', price: 100 },
+          { label: 'Hot 16oz', price: 115 },
+          { label: 'Iced 16oz', price: 100 },
+          { label: 'Iced 22oz', price: 115 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+      {
+        id: 'nc-thaipink',
+        category: 'Non-Coffee',
+        name: 'Thai Pink',
+        variants: [
+          { label: 'Iced 16oz', price: 95 },
+          { label: 'Iced 22oz', price: 110 }
+        ],
+        addons: COFFEE_DRINK_ADDONS,
+        available: true
+      },
+
+      // ==================== 5. SODA, FRIZZ & REFRESHER ====================
+      {
+        id: 'sfr-blueberrysoda',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Blueberry Soda',
+        variants: [
+          { label: '16oz', price: 65 },
+          { label: '22oz', price: 80 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-lycheesoda',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Lychee Soda',
+        variants: [
+          { label: '16oz', price: 65 },
+          { label: '22oz', price: 80 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-greenapplesoda',
+        category: 'Soda, Frizz & Refresher',
+        name: 'GreenApple Soda',
+        variants: [
+          { label: '16oz', price: 65 },
+          { label: '22oz', price: 80 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-strawberrysoda',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Strawberry Soda',
+        variants: [
+          { label: '16oz', price: 65 },
+          { label: '22oz', price: 80 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-rootbeersoda',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Rootbeer Soda',
+        variants: [
+          { label: '16oz', price: 65 },
+          { label: '22oz', price: 80 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-bubblegumsoda',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Bubble Gum Soda',
+        variants: [
+          { label: '16oz', price: 65 },
+          { label: '22oz', price: 80 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-lemonsoda',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Lemon Soda',
+        variants: [
+          { label: '16oz', price: 65 },
+          { label: '22oz', price: 80 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-kiwifrizz',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Kiwi Frizz',
+        variants: [
+          { label: '16oz', price: 70 },
+          { label: '22oz', price: 85 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-passionfruitfrizz',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Passionfruit Frizz',
+        variants: [
+          { label: '16oz', price: 70 },
+          { label: '22oz', price: 85 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-mangofrizz',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Mango Frizz',
+        variants: [
+          { label: '16oz', price: 70 },
+          { label: '22oz', price: 85 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-lemoncucumber',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Lemon Cucumber (Refresher)',
+        variants: [
+          { label: '16oz', price: 80 },
+          { label: '22oz', price: 95 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-honeylemon',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Honey Lemon (Refresher)',
+        variants: [
+          { label: '16oz', price: 80 },
+          { label: '22oz', price: 95 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'sfr-strawberrylemon',
+        category: 'Soda, Frizz & Refresher',
+        name: 'Strawberry Lemon (Refresher)',
+        variants: [
+          { label: '16oz', price: 80 },
+          { label: '22oz', price: 95 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+
+      // ==================== 6. FRAPPE SERIES (MILKBASED & COFFEE BASED) ====================
+      {
+        id: 'fr-strawberrycheesecake',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Strawberry Cheesecake',
+        variants: [
+          { label: '16oz', price: 110 },
+          { label: '22oz', price: 125 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-blueberrycream',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Blueberry Cream',
+        variants: [
+          { label: '16oz', price: 100 },
+          { label: '22oz', price: 115 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-mangocheesecake',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Mango Cheesecake',
+        variants: [
+          { label: '16oz', price: 110 },
+          { label: '22oz', price: 125 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-chocolateoverload',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Chocolate Overload',
+        variants: [
+          { label: '16oz', price: 110 },
+          { label: '22oz', price: 125 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-chocolateoreo',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Chocolate Oreo',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-oreocookiescream',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Oreo Cookies & Cream',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-matchafrappe',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Matcha Frappe',
+        variants: [
+          { label: '16oz', price: 110 },
+          { label: '22oz', price: 125 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-matchaoreo',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Matcha Oreo',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-strawberryoreo',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Strawberry Oreo',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-ubecheese',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Ube Cheese',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-biscoffcaramelcream',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Biscoff Caramel Cream',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-kitkatfrappe',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Kitkat Frappe',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-nutellacheesecake',
+        category: 'Frappe Series',
+        subType: 'Milkbased',
+        name: 'Nutella Cheesecake',
+        variants: [
+          { label: '16oz', price: 125 },
+          { label: '22oz', price: 140 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      // Coffee Based Frappes
+      {
+        id: 'fr-vanillafrappe',
+        category: 'Frappe Series',
+        subType: 'Coffee Based',
+        name: 'Vanilla Frappe',
+        variants: [
+          { label: '16oz', price: 115 },
+          { label: '22oz', price: 130 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-caramelfrappe',
+        category: 'Frappe Series',
+        subType: 'Coffee Based',
+        name: 'Caramel Frappe',
+        variants: [
+          { label: '16oz', price: 115 },
+          { label: '22oz', price: 130 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-darkmochafrappe',
+        category: 'Frappe Series',
+        subType: 'Coffee Based',
+        name: 'Dark Mocha Frappe',
+        variants: [
+          { label: '16oz', price: 115 },
+          { label: '22oz', price: 130 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-coffeejellyfrappe',
+        category: 'Frappe Series',
+        subType: 'Coffee Based',
+        name: 'Coffee Jelly Frappe',
+        variants: [
+          { label: '16oz', price: 115 },
+          { label: '22oz', price: 130 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-biscoffeefrappe',
+        category: 'Frappe Series',
+        subType: 'Coffee Based',
+        name: 'Biscoffee Frappe',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+      {
+        id: 'fr-javachips',
+        category: 'Frappe Series',
+        subType: 'Coffee Based',
+        name: 'Java Chips',
+        variants: [
+          { label: '16oz', price: 120 },
+          { label: '22oz', price: 135 }
+        ],
+        addons: SODA_FRAPPE_ADDONS,
+        available: true
+      },
+
+      // ==================== 7. RICE MEAL ====================
+      {
+        id: 'rm-cheesebacon',
+        category: 'Rice Meal',
+        name: 'Cheese Bacon',
+        variants: [
+          { label: 'Solo', price: 99 },
+          { label: 'W/ Drinks (Soda Series)', price: 149, triggersSodaFlavor: true }
+        ],
+        addons: RICE_MEAL_ADDONS,
+        available: true
+      },
+      {
+        id: 'rm-luncheonegg',
+        category: 'Rice Meal',
+        name: 'Luncheon & Egg',
+        variants: [
+          { label: 'Solo', price: 99 },
+          { label: 'W/ Drinks (Soda Series)', price: 149, triggersSodaFlavor: true }
+        ],
+        addons: RICE_MEAL_ADDONS,
+        available: true
+      },
+      {
+        id: 'rm-chickenstrips',
+        category: 'Rice Meal',
+        name: 'Chicken Strips',
+        variants: [
+          { label: 'Solo', price: 119 },
+          { label: 'W/ Drinks (Soda Series)', price: 169, triggersSodaFlavor: true }
+        ],
+        addons: RICE_MEAL_ADDONS,
+        available: true
+      },
+      {
+        id: 'rm-caramelizedluncheon',
+        category: 'Rice Meal',
+        name: 'Caramelized Luncheonmeat',
+        variants: [
+          { label: 'Solo', price: 119 },
+          { label: 'W/ Drinks (Soda Series)', price: 169, triggersSodaFlavor: true }
+        ],
+        addons: RICE_MEAL_ADDONS,
+        available: true
+      },
+      {
+        id: 'rm-luncheonmeatbacon',
+        category: 'Rice Meal',
+        name: 'Luncheon meat & Bacon',
+        description: '2pcs spam, 2pcs bacon & egg',
+        variants: [
+          { label: 'Solo', price: 139 },
+          { label: 'W/ Drinks (Soda Series)', price: 189, triggersSodaFlavor: true }
+        ],
+        addons: RICE_MEAL_ADDONS,
+        available: true
+      },
+      {
+        id: 'rm-cheesyhungarian',
+        category: 'Rice Meal',
+        name: 'Cheesy Hungarian',
+        variants: [
+          { label: 'Solo', price: 139 },
+          { label: 'W/ Drinks (Soda Series)', price: 189, triggersSodaFlavor: true }
+        ],
+        addons: RICE_MEAL_ADDONS,
+        available: true
+      },
+      {
+        id: 'rm-chickenfillet',
+        category: 'Rice Meal',
+        name: 'Chicken Fillet (with egg)',
+        variants: [
+          { label: 'Solo', price: 139 },
+          { label: 'W/ Drinks (Soda Series)', price: 189, triggersSodaFlavor: true }
+        ],
+        addons: RICE_MEAL_ADDONS,
+        available: true
+      },
+      {
+        id: 'rm-porktonkatsu',
+        category: 'Rice Meal',
+        name: 'Pork Tonkatsu',
+        variants: [
+          { label: 'Solo', price: 139 },
+          { label: 'W/ Drinks (Soda Series)', price: 189, triggersSodaFlavor: true }
+        ],
+        addons: RICE_MEAL_ADDONS,
+        available: true
+      },
+
+      // ==================== 8. KOREAN NOODLES ====================
+      {
+        id: 'kn-classicramen',
+        category: 'Korean Noodles',
+        name: 'Classic Ramen',
+        description: 'Jin Ramen with boiled egg',
+        variants: [
+          { label: 'Mild', price: 119 },
+          { label: 'Spicy', price: 119 }
+        ],
+        addons: NOODLES_ADDONS,
+        available: true
+      },
+      {
+        id: 'kn-cheesyramen',
+        category: 'Korean Noodles',
+        name: 'Cheesy Ramen',
+        description: 'Jin Ramen with boiled egg & cheese',
+        variants: [
+          { label: 'Mild', price: 139 },
+          { label: 'Spicy', price: 139 }
+        ],
+        addons: NOODLES_ADDONS,
+        available: true
+      },
+      {
+        id: 'kn-classiccarbonara',
+        category: 'Korean Noodles',
+        name: 'Classic Carbonara',
+        description: 'Samyang Carbonara with cheese',
+        variants: [
+          { label: 'Mild', price: 145 },
+          { label: 'Spicy', price: 145 }
+        ],
+        addons: NOODLES_ADDONS,
+        available: true
+      },
+      {
+        id: 'kn-carbonaraspam',
+        category: 'Korean Noodles',
+        name: 'Carbonara with spam',
+        description: 'Samyang Carbonara with spam & cheese',
+        variants: [
+          { label: 'Mild', price: 165 },
+          { label: 'Spicy', price: 165 }
+        ],
+        addons: NOODLES_ADDONS,
+        available: true
+      },
+      {
+        id: 'kn-carbonaraspamegg',
+        category: 'Korean Noodles',
+        name: 'Carbonara w/ spam & egg',
+        description: 'Samyang Carbonara with egg, spam & cheese',
+        variants: [
+          { label: 'Mild', price: 189 },
+          { label: 'Spicy', price: 189 }
+        ],
+        addons: NOODLES_ADDONS,
+        available: true
+      },
+      {
+        id: 'kn-carbonaraoverload',
+        category: 'Korean Noodles',
+        name: 'Carbonara Overload',
+        description: 'Samyang Carbonara with egg, spam, cheese & 1 pack nori',
+        variants: [
+          { label: 'Mild', price: 225 },
+          { label: 'Spicy', price: 225 }
+        ],
+        addons: NOODLES_ADDONS,
+        available: true
+      },
+
+      // ==================== 9. BURGER & SANDWICH ====================
+      {
+        id: 'bs-pattyburger',
+        category: 'Burger & Sandwich',
+        subType: 'Burger (with fries)',
+        name: 'Patty Burger',
+        description: 'Served with fries',
+        variants: [{ label: 'Regular (w/ Fries)', price: 65 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      {
+        id: 'bs-pattyveggies',
+        category: 'Burger & Sandwich',
+        subType: 'Burger (with fries)',
+        name: 'Patty with Veggies',
+        description: 'Served with fries',
+        variants: [{ label: 'Regular (w/ Fries)', price: 89 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      {
+        id: 'bs-hameggburger',
+        category: 'Burger & Sandwich',
+        subType: 'Burger (with fries)',
+        name: 'Ham & Egg Burger',
+        description: 'Served with fries',
+        variants: [{ label: 'Regular (w/ Fries)', price: 89 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      {
+        id: 'bs-chickenburger',
+        category: 'Burger & Sandwich',
+        subType: 'Burger (with fries)',
+        name: 'Chicken Burger',
+        description: 'Served with fries',
+        variants: [{ label: 'Regular (w/ Fries)', price: 99 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      {
+        id: 'bs-burgeroverload',
+        category: 'Burger & Sandwich',
+        subType: 'Burger (with fries)',
+        name: 'Burger Overload',
+        description: 'Chicken with bacon & fries',
+        variants: [{ label: 'Regular (w/ Fries)', price: 129 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      // Sandwiches
+      {
+        id: 'bs-hambaconsandwich',
+        category: 'Burger & Sandwich',
+        subType: 'Sandwich',
+        name: 'Ham & Bacon Sandwich',
+        variants: [{ label: 'Regular', price: 135 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      {
+        id: 'bs-baconoverloadsandwich',
+        category: 'Burger & Sandwich',
+        subType: 'Sandwich',
+        name: 'Bacon Overload Sandwich',
+        variants: [{ label: 'Regular', price: 145 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      {
+        id: 'bs-chickenoverloadsandwich',
+        category: 'Burger & Sandwich',
+        subType: 'Sandwich',
+        name: 'Chicken Overload Sandwich',
+        variants: [{ label: 'Regular', price: 155 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      {
+        id: 'bs-hameggtoastsolo',
+        category: 'Burger & Sandwich',
+        subType: 'Sandwich',
+        name: 'Ham & Egg Toast Solo',
+        variants: [{ label: 'Solo', price: 95 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+      {
+        id: 'bs-hameggtoast2pcs',
+        category: 'Burger & Sandwich',
+        subType: 'Sandwich',
+        name: 'Ham & Egg Toast (2pcs)',
+        variants: [{ label: '2pcs', price: 159 }],
+        addons: BURGER_SANDWICH_ADDONS,
+        available: true
+      },
+
+      // ==================== 10. FRIES & SNACKS ====================
+      {
+        id: 'fs-friessolo',
+        category: 'Fries & Snacks',
+        name: 'Fries Solo',
+        description: 'Choose flavor: Cheese, BBQ, or Sourcream',
+        variants: [{ label: 'Solo', price: 60 }],
+        flavorSelector: {
+          label: 'Choose Fries Flavor',
+          options: FRIES_FLAVORS,
+          maxSelect: 1
+        },
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-friesduo',
+        category: 'Fries & Snacks',
+        name: 'Fries Duo (2 Flavors)',
+        description: 'Choose up to 2 flavors: Cheese, BBQ, Sourcream',
+        variants: [{ label: 'Duo (2 Flavors)', price: 99 }],
+        flavorSelector: {
+          label: 'Choose up to 2 Flavors',
+          options: FRIES_FLAVORS,
+          maxSelect: 2
+        },
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-cheesybaconfries',
+        category: 'Fries & Snacks',
+        name: 'Cheesy Bacon Fries',
+        variants: [{ label: 'Regular', price: 109 }],
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-frieschips',
+        category: 'Fries & Snacks',
+        name: 'Fries & Chips',
+        description: 'Choose flavor: Cheese, BBQ, or Sourcream',
+        variants: [{ label: 'Regular', price: 109 }],
+        flavorSelector: {
+          label: 'Choose Flavor',
+          options: FRIES_FLAVORS,
+          maxSelect: 1
+        },
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-chickenstripsfries',
+        category: 'Fries & Snacks',
+        name: 'Chicken strips & Fries',
+        variants: [{ label: 'Regular', price: 129 }],
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-cheesynachos',
+        category: 'Fries & Snacks',
+        name: 'Cheesy Nachos',
+        variants: [{ label: 'Regular', price: 120 }],
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-nachosbacon',
+        category: 'Fries & Snacks',
+        name: 'Nachos with bacon',
+        variants: [{ label: 'Regular', price: 150 }],
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-chickenfinger',
+        category: 'Fries & Snacks',
+        name: 'Chicken Finger (6 pcs)',
+        variants: [{ label: '6 pcs', price: 129 }],
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-cheesesticks',
+        category: 'Fries & Snacks',
+        name: 'Cheesesticks (5 pcs)',
+        variants: [{ label: '5 pcs', price: 60 }],
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-hashbrown',
+        category: 'Fries & Snacks',
+        name: 'Hashbrown (2 pcs)',
+        variants: [{ label: '2 pcs', price: 89 }],
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+      {
+        id: 'fs-churros',
+        category: 'Fries & Snacks',
+        name: 'Churros (6 pcs)',
+        variants: [{ label: '6 pcs', price: 99 }],
+        addons: FRIES_SNACKS_ADDONS,
+        available: true
+      },
+
+      // ==================== 11. CROFFLES, DONUTS & WAFFLES ====================
+      // Croffles
+      {
+        id: 'cdw-croffle-nutellaalmonds',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Croffles',
+        name: 'Nutella Almonds Croffle',
+        variants: [{ label: '1 pc', price: 130 }],
+        addons: [],
+        available: true
+      },
+      {
+        id: 'cdw-croffle-nutellaalcapone',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Croffles',
+        name: 'Nutella Alcapone Cream Croffle',
+        variants: [{ label: '1 pc', price: 145 }],
+        addons: [],
+        available: true
+      },
+      {
+        id: 'cdw-croffle-biscofflotus',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Croffles',
+        name: 'Biscoff Lotus Cream Croffle',
+        variants: [{ label: '1 pc', price: 145 }],
+        addons: [],
+        available: true
+      },
+      {
+        id: 'cdw-croffle-biscoffalcapone',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Croffles',
+        name: 'Biscoff Alcapone Cream Croffle',
+        variants: [{ label: '1 pc', price: 145 }],
+        addons: [],
+        available: true
+      },
+      {
+        id: 'cdw-croffle-matchaalcapone',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Croffles',
+        name: 'Matcha Alcapone Cream Croffle',
+        variants: [{ label: '1 pc', price: 145 }],
+        addons: [],
+        available: true
+      },
+      {
+        id: 'cdw-croffle-smores',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Croffles',
+        name: 'Smores Croffle',
+        variants: [{ label: '1 pc', price: 145 }],
+        addons: [],
+        available: true
+      },
+      // Mini Donuts
+      {
+        id: 'cdw-donuts-1flavor',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Mini Donuts',
+        name: 'Mini Donuts - 1 Flavor',
+        description: 'Choose 1 flavor with toppings',
+        variants: [
+          { label: '6 pcs', price: 70 },
+          { label: '12 pcs', price: 130 },
+          { label: '20 pcs', price: 189 }
+        ],
+        flavorSelector: {
+          label: 'Choose 1 Donut Flavor',
+          options: MINI_DONUT_FLAVORS,
+          maxSelect: 1
+        },
+        addons: [],
+        available: true
+      },
+      {
+        id: 'cdw-donuts-2flavors',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Mini Donuts',
+        name: 'Mini Donuts - 2 Flavors',
+        description: 'Choose up to 2 flavors with toppings',
+        variants: [
+          { label: '6 pcs', price: 75 },
+          { label: '12 pcs', price: 135 },
+          { label: '20 pcs', price: 199 }
+        ],
+        flavorSelector: {
+          label: 'Choose up to 2 Donut Flavors',
+          options: MINI_DONUT_FLAVORS,
+          maxSelect: 2
+        },
+        addons: [],
+        available: true
+      },
+      {
+        id: 'cdw-donuts-assorted',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Mini Donuts',
+        name: 'Mini Donuts - Assorted',
+        description: 'Assorted flavors with toppings',
+        variants: [
+          { label: '12 pcs', price: 145 },
+          { label: '20 pcs', price: 219 }
+        ],
+        flavorSelector: {
+          label: 'Optional Preferred Flavors',
+          options: MINI_DONUT_FLAVORS,
+          maxSelect: 4
+        },
+        addons: [],
+        available: true
+      },
+      // Waffle Pancake
+      {
+        id: 'cdw-waffle-oreocream',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Waffle Pancake',
+        name: 'Oreo Cream Waffle',
+        variants: [
+          { label: 'Half (1pc)', price: 70 },
+          { label: 'Whole (2pcs)', price: 110 }
+        ],
+        addons: WAFFLE_ADDONS,
+        available: true
+      },
+      {
+        id: 'cdw-waffle-caramelcream',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Waffle Pancake',
+        name: 'Caramel Cream Waffle',
+        variants: [
+          { label: 'Half (1pc)', price: 70 },
+          { label: 'Whole (2pcs)', price: 110 }
+        ],
+        addons: WAFFLE_ADDONS,
+        available: true
+      },
+      {
+        id: 'cdw-waffle-strawberrycream',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Waffle Pancake',
+        name: 'Strawberry Cream Waffle',
+        variants: [
+          { label: 'Half (1pc)', price: 70 },
+          { label: 'Whole (2pcs)', price: 110 }
+        ],
+        addons: WAFFLE_ADDONS,
+        available: true
+      },
+      {
+        id: 'cdw-waffle-nutellaalmonds',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Waffle Pancake',
+        name: 'Nutella Almonds Waffle',
+        variants: [
+          { label: 'Half (1pc)', price: 75 },
+          { label: 'Whole (2pcs)', price: 115 }
+        ],
+        addons: WAFFLE_ADDONS,
+        available: true
+      },
+      {
+        id: 'cdw-waffle-chocochipscream',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Waffle Pancake',
+        name: 'Choco Chips & Cream Waffle',
+        variants: [
+          { label: 'Half (1pc)', price: 80 },
+          { label: 'Whole (2pcs)', price: 120 }
+        ],
+        addons: WAFFLE_ADDONS,
+        available: true
+      },
+      {
+        id: 'cdw-waffle-biscoffcream',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Waffle Pancake',
+        name: 'Biscoff Cream Waffle',
+        variants: [
+          { label: 'Half (1pc)', price: 80 },
+          { label: 'Whole (2pcs)', price: 120 }
+        ],
+        addons: WAFFLE_ADDONS,
+        available: true
+      },
+      {
+        id: 'cdw-waffle-smores',
+        category: 'Croffles, Donuts & Waffles',
+        subType: 'Waffle Pancake',
+        name: 'Smores Waffle',
+        variants: [
+          { label: 'Half (1pc)', price: 90 },
+          { label: 'Whole (2pcs)', price: 130 }
+        ],
+        addons: WAFFLE_ADDONS,
+        available: true
+      }
+    ];
+
+    // =========================================================================
+    // 2. STATE MANAGEMENT & LOCALSTORAGE KEYS
+    // =========================================================================
+    const STORAGE_KEYS = {
+      MENU: 'akeopi_pos_menu_v1',
+      TRANSACTIONS: 'akeopi_pos_transactions_v1',
+      ORDER_COUNTER: 'akeopi_pos_order_counter_v1',
+      THEME: 'akeopi_pos_theme_v1'
+    };
+
+    let menuItems = [];
+    let transactions = [];
+    let cart = [];
+    let activeCategory = 'All';
+    let searchQuery = '';
+    let orderType = 'Dine-In';
+    let deliveryFeeEnabled = false;
+    let deliveryFeeAmount = 0;
+    let selectedPaymentMethod = 'Cash';
+    let pendingDeleteOrderIndex = null;
+
+    // Item Modal transient state
+    let currentModalItem = null;
+    let editingCartId = null;
+    let selectedVariantIdx = 0;
+    let selectedFlavors = [];
+    let selectedAddonIndices = new Set();
+    let modalQuantity = 1;
+
+    // =========================================================================
+    // 3. INITIALIZATION
+    // =========================================================================
+    document.addEventListener('DOMContentLoaded', () => {
+      initTheme();
+      loadPersistedData();
+      populateManageCategoryDropdown();
+      renderCategoryTabs();
+      renderMenuGrid();
+      renderCart();
+      updateHeaderSalesBadge();
+      startLiveClock();
+
+      // Search input listener
+      const searchInput = document.getElementById('search-input');
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = e.target.value.trim().toLowerCase();
+        document.getElementById('clear-search-btn').classList.toggle('hidden', !searchQuery);
+        renderMenuGrid();
+      });
+    });
+
+    function loadPersistedData() {
+      try {
+        const savedMenu = localStorage.getItem(STORAGE_KEYS.MENU);
+        if (savedMenu) {
+          menuItems = JSON.parse(savedMenu);
+        } else {
+          menuItems = JSON.parse(JSON.stringify(DEFAULT_MENU_ITEMS));
+          saveMenuToStorage();
+        }
+      } catch (e) {
+        menuItems = JSON.parse(JSON.stringify(DEFAULT_MENU_ITEMS));
+      }
+
+      try {
+        const savedTx = localStorage.getItem(STORAGE_KEYS.TRANSACTIONS);
+        transactions = savedTx ? JSON.parse(savedTx) : [];
+      } catch (e) {
+        transactions = [];
+      }
+    }
+
+    function saveMenuToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.MENU, JSON.stringify(menuItems));
+      } catch (e) {
+        console.error('Failed to save menu:', e);
+      }
+    }
+
+    function saveTransactionsToStorage() {
+      try {
+        localStorage.setItem(STORAGE_KEYS.TRANSACTIONS, JSON.stringify(transactions));
+      } catch (e) {
+        console.error('Failed to save transactions:', e);
+      }
+    }
+
+    function startLiveClock() {
+      const update = () => {
+        const now = new Date();
+        const options = {
+          weekday: 'short',
+          month: 'short',
+          day: 'numeric',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        };
+        document.getElementById('live-clock').textContent = now.toLocaleDateString('en-PH', options);
+      };
+      update();
+      setInterval(update, 15000);
+    }
+
+    // =========================================================================
+    // 4. THEME TOGGLE (WARM CREAM/ESPRESSO LIGHT vs CRISP DARK MODE)
+    // =========================================================================
+    function initTheme() {
+      const savedTheme = localStorage.getItem(STORAGE_KEYS.THEME);
+      if (savedTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+      updateThemeIcons();
+    }
+
+    function toggleTheme() {
+      const isDark = document.documentElement.classList.toggle('dark');
+      localStorage.setItem(STORAGE_KEYS.THEME, isDark ? 'dark' : 'light');
+      updateThemeIcons();
+    }
+
+    function updateThemeIcons() {
+      const isDark = document.documentElement.classList.contains('dark');
+      document.getElementById('icon-sun').classList.toggle('hidden', !isDark);
+      document.getElementById('icon-moon').classList.toggle('hidden', isDark);
+    }
+
+    // =========================================================================
+    // 5. CATEGORY TABS & MENU GRID RENDERING
+    // =========================================================================
+    function renderCategoryTabs() {
+      const container = document.getElementById('category-tabs');
+      container.innerHTML = CATEGORIES.map((cat) => {
+        const isActive = cat === activeCategory;
+        const count = cat === 'All'
+          ? menuItems.length
+          : menuItems.filter((i) => i.category === cat).length;
+        return `
+          <button
+            onclick="selectCategory('${cat.replace(/'/g, "\\'")}')"
+            class="shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 border ${
+              isActive
+                ? 'bg-forest-800 text-white border-forest-800 dark:bg-amber-500 dark:text-stone-950 dark:border-amber-500 shadow-sm'
+                : 'bg-white dark:bg-stone-900 text-espresso-800 dark:text-stone-300 border-cream-300 dark:border-stone-800 hover:bg-cream-200/60 dark:hover:bg-stone-800'
+            }"
+          >
+            <span>${cat}</span>
+            <span class="text-[10px] px-1.5 py-0.5 rounded-full ${
+              isActive
+                ? 'bg-white/20 text-white dark:bg-stone-950/20 dark:text-stone-950'
+                : 'bg-cream-100 dark:bg-stone-800 text-stone-500 dark:text-stone-400'
+            }">${count}</span>
+          </button>
+        `;
+      }).join('');
+    }
+
+    function selectCategory(category) {
+      activeCategory = category;
+      renderCategoryTabs();
+      renderMenuGrid();
+    }
+
+    function clearSearch() {
+      searchQuery = '';
+      const input = document.getElementById('search-input');
+      input.value = '';
+      document.getElementById('clear-search-btn').classList.add('hidden');
+      renderMenuGrid();
+    }
+
+    function renderMenuGrid() {
+      const grid = document.getElementById('menu-grid');
+      const filtered = menuItems.filter((item) => {
+        const matchesCat = activeCategory === 'All' || item.category === activeCategory;
+        const matchesSearch =
+          !searchQuery ||
+          item.name.toLowerCase().includes(searchQuery) ||
+          item.category.toLowerCase().includes(searchQuery) ||
+          (item.subType && item.subType.toLowerCase().includes(searchQuery)) ||
+          (item.description && item.description.toLowerCase().includes(searchQuery));
+        return matchesCat && matchesSearch;
+      });
+
+      document.getElementById('active-category-title').textContent =
+        activeCategory === 'All' ? 'All Menu Items' : activeCategory;
+      document.getElementById('visible-items-count').textContent = `${filtered.length} item${filtered.length === 1 ? '' : 's'}`;
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div class="col-span-full py-16 text-center bg-white/60 dark:bg-stone-900/60 rounded-3xl border border-dashed border-cream-300 dark:border-stone-800">
+            <p class="text-base font-extrabold text-espresso-800 dark:text-stone-300">No menu items found</p>
+            <p class="text-xs text-stone-500 mt-1">Try another search keyword or switch category.</p>
+          </div>
+        `;
+        return;
+      }
+
+      grid.innerHTML = filtered.map((item) => {
+        const isSoldOut = item.available === false;
+        const prices = item.variants.map((v) => v.price);
+        const minPrice = Math.min(...prices);
+        const maxPrice = Math.max(...prices);
+        const priceDisplay = minPrice === maxPrice ? `₱${minPrice}` : `₱${minPrice} – ₱${maxPrice}`;
+
+        const variantBadges = item.variants
+          .map(
+            (v) =>
+              `<span class="inline-flex items-center px-2 py-0.5 rounded-md text-[11px] font-semibold bg-cream-100 dark:bg-stone-800 text-espresso-800 dark:text-stone-300 border border-cream-200 dark:border-stone-700">${v.label}: <strong class="ml-1 text-forest-800 dark:text-amber-300">₱${v.price}</strong></span>`
+          )
+          .join('');
+
+        return `
+          <button
+            type="button"
+            ${isSoldOut ? 'disabled' : `onclick="openItemModal('${item.id}')"`}
+            class="text-left group relative flex flex-col justify-between p-3.5 rounded-2xl bg-white dark:bg-stone-900 border border-cream-200 dark:border-stone-800 shadow-xs transition-all duration-150 ${
+              isSoldOut
+                ? 'opacity-55 cursor-not-allowed'
+                : 'hover:border-forest-700 dark:hover:border-amber-400 hover:shadow-md active:scale-[0.99] cursor-pointer'
+            }"
+          >
+            <div>
+              <div class="flex items-center justify-between gap-2 mb-1">
+                <span class="text-[10px] font-bold uppercase tracking-wider text-forest-700 dark:text-amber-400 truncate">
+                  ${item.subType ? `${item.category} • ${item.subType}` : item.category}
+                </span>
+                ${
+                  isSoldOut
+                    ? '<span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-300">SOLD OUT</span>'
+                    : `<span class="text-sm font-extrabold text-forest-800 dark:text-amber-300 shrink-0">${priceDisplay}</span>`
+                }
+              </div>
+
+              <h3 class="font-extrabold text-sm sm:text-base text-espresso-900 dark:text-stone-100 group-hover:text-forest-800 dark:group-hover:text-amber-200 transition leading-snug">
+                ${item.name}
+              </h3>
+
+              ${
+                item.description
+                  ? `<p class="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 line-clamp-1">${item.description}</p>`
+                  : ''
+              }
+            </div>
+
+            <div class="mt-3 pt-2.5 border-t border-cream-100 dark:border-stone-800/80 flex flex-wrap gap-1">
+              ${variantBadges}
+            </div>
+          </button>
+        `;
+      }).join('');
+    }
+
+    // =========================================================================
+    // 6. ITEM VARIANT, FLAVOR & ADD-ONS MODAL LOGIC (ADD & EDIT ORDER ITEM)
+    // =========================================================================
+    function openItemModal(itemId) {
+      const item = menuItems.find((i) => i.id === itemId);
+      if (!item || item.available === false) return;
+
+      editingCartId = null;
+      currentModalItem = item;
+      selectedVariantIdx = 0;
+      selectedFlavors = [];
+      selectedAddonIndices = new Set();
+      modalQuantity = 1;
+
+      populateItemModalUI('');
+      showItemModal();
+    }
+
+    function openEditCartItemModal(cartId) {
+      const cartItem = cart.find((c) => c.cartId === cartId);
+      if (!cartItem) return;
+
+      let menuItem = menuItems.find((i) => i.id === cartItem.itemId);
+      if (!menuItem) {
+        const fallbackVariants = [{ label: cartItem.variantLabel, price: cartItem.basePrice }];
+        menuItem = {
+          id: cartItem.itemId,
+          category: cartItem.category,
+          name: cartItem.name,
+          variants: fallbackVariants,
+          addons: cartItem.addons && cartItem.addons.length > 0 ? cartItem.addons : getDefaultAddonsForCategory(cartItem.category),
+          available: true
+        };
+      }
+
+      editingCartId = cartItem.cartId;
+      currentModalItem = menuItem;
+
+      const matchedVariantIdx = menuItem.variants.findIndex((v) => v.label === cartItem.variantLabel);
+      selectedVariantIdx = matchedVariantIdx >= 0 ? matchedVariantIdx : 0;
+
+      selectedFlavors = Array.isArray(cartItem.flavors) ? [...cartItem.flavors] : [];
+
+      selectedAddonIndices = new Set();
+      const availableAddons = menuItem.addons || [];
+      (cartItem.addons || []).forEach((savedAddon) => {
+        const foundIdx = availableAddons.findIndex(
+          (a) => a.name === savedAddon.name && a.price === savedAddon.price
+        );
+        if (foundIdx >= 0) {
+          selectedAddonIndices.add(foundIdx);
+        }
+      });
+
+      modalQuantity = cartItem.qty || 1;
+
+      populateItemModalUI(cartItem.note || '');
+      showItemModal();
+    }
+
+    function populateItemModalUI(initialNote) {
+      const item = currentModalItem;
+      document.getElementById('modal-item-category').textContent = item.subType
+        ? `${item.category} — ${item.subType}`
+        : item.category;
+      document.getElementById('modal-item-name').textContent = item.name;
+
+      const descEl = document.getElementById('modal-item-desc');
+      if (item.description) {
+        descEl.textContent = item.description;
+        descEl.classList.remove('hidden');
+      } else {
+        descEl.classList.add('hidden');
+      }
+
+      document.getElementById('modal-item-note').value = initialNote;
+      document.getElementById('modal-qty-display').textContent = modalQuantity;
+      document.getElementById('modal-add-btn-label').textContent = editingCartId ? 'Update Order' : 'Add to Order';
+
+      renderModalVariants();
+      renderModalFlavors();
+      renderModalAddons();
+      updateModalTotalPrice();
+    }
+
+    function showItemModal() {
+      const modal = document.getElementById('item-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeItemModal() {
+      const modal = document.getElementById('item-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      currentModalItem = null;
+      editingCartId = null;
+    }
+
+    function renderModalVariants() {
+      const grid = document.getElementById('modal-variants-grid');
+      grid.innerHTML = currentModalItem.variants
+        .map((variant, idx) => {
+          const active = idx === selectedVariantIdx;
+          return `
+            <button
+              type="button"
+              onclick="selectModalVariant(${idx})"
+              class="p-3 rounded-2xl border-2 text-left transition flex items-center justify-between ${
+                active
+                  ? 'border-forest-800 bg-forest-800/10 dark:border-amber-400 dark:bg-amber-400/15'
+                  : 'border-cream-300 dark:border-stone-700 bg-white dark:bg-stone-800 hover:border-forest-700/50'
+              }"
+            >
+              <span class="text-xs sm:text-sm font-bold text-espresso-900 dark:text-stone-100">${variant.label}</span>
+              <span class="text-sm font-extrabold text-forest-800 dark:text-amber-300">₱${variant.price}</span>
+            </button>
+          `;
+        })
+        .join('');
+    }
+
+    function selectModalVariant(idx) {
+      selectedVariantIdx = idx;
+      const config = getActiveFlavorConfig();
+      if (!config) {
+        selectedFlavors = [];
+      } else {
+        selectedFlavors = selectedFlavors
+          .filter((f) => config.options.includes(f))
+          .slice(0, config.maxSelect);
+      }
+      renderModalVariants();
+      renderModalFlavors();
+      updateModalTotalPrice();
+    }
+
+    function getActiveFlavorConfig() {
+      if (!currentModalItem) return null;
+      const chosenVariant = currentModalItem.variants[selectedVariantIdx];
+      if (chosenVariant && chosenVariant.triggersSodaFlavor) {
+        return {
+          label: 'Choose Soda Series Drink (Included)',
+          options: SODA_SERIES_FLAVORS,
+          maxSelect: 1
+        };
+      }
+      if (currentModalItem.flavorSelector) {
+        return currentModalItem.flavorSelector;
+      }
+      return null;
+    }
+
+    function renderModalFlavors() {
+      const section = document.getElementById('modal-flavors-section');
+      const config = getActiveFlavorConfig();
+
+      if (!config) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      document.getElementById('modal-flavors-label').textContent = config.label;
+      document.getElementById('modal-flavors-hint').textContent =
+        config.maxSelect === 1 ? 'Pick 1' : `Pick up to ${config.maxSelect}`;
+
+      if (selectedFlavors.length === 0 && config.options.length > 0) {
+        selectedFlavors = [config.options[0]];
+      }
+
+      const grid = document.getElementById('modal-flavors-grid');
+      grid.innerHTML = config.options
+        .map((flavor) => {
+          const isSelected = selectedFlavors.includes(flavor);
+          return `
+            <button
+              type="button"
+              onclick="toggleModalFlavor('${flavor.replace(/'/g, "\\'")}')"
+              class="px-3 py-1.5 rounded-xl text-xs font-bold border transition ${
+                isSelected
+                  ? 'bg-forest-800 text-white border-forest-800 dark:bg-amber-500 dark:text-stone-950 dark:border-amber-500'
+                  : 'bg-white dark:bg-stone-800 text-espresso-800 dark:text-stone-300 border-cream-300 dark:border-stone-700 hover:border-forest-700'
+              }"
+            >
+              ${isSelected ? '✓ ' : ''}${flavor}
+            </button>
+          `;
+        })
+        .join('');
+    }
+
+    function toggleModalFlavor(flavor) {
+      const config = getActiveFlavorConfig();
+      if (!config) return;
+
+      if (config.maxSelect === 1) {
+        selectedFlavors = [flavor];
+      } else {
+        const existingIndex = selectedFlavors.indexOf(flavor);
+        if (existingIndex > -1) {
+          if (selectedFlavors.length > 1) {
+            selectedFlavors.splice(existingIndex, 1);
+          }
+        } else {
+          if (selectedFlavors.length >= config.maxSelect) {
+            selectedFlavors.shift();
+          }
+          selectedFlavors.push(flavor);
+        }
+      }
+      renderModalFlavors();
+    }
+
+    function renderModalAddons() {
+      const section = document.getElementById('modal-addons-section');
+      const addons = currentModalItem.addons || [];
+
+      if (addons.length === 0) {
+        section.classList.add('hidden');
+        return;
+      }
+
+      section.classList.remove('hidden');
+      const grid = document.getElementById('modal-addons-grid');
+      grid.innerHTML = addons
+        .map((addon, idx) => {
+          const checked = selectedAddonIndices.has(idx);
+          return `
+            <button
+              type="button"
+              onclick="toggleModalAddon(${idx})"
+              class="p-2.5 rounded-xl border text-left transition flex items-center justify-between ${
+                checked
+                  ? 'border-forest-800 bg-forest-800/10 dark:border-amber-400 dark:bg-amber-400/15'
+                  : 'border-cream-300 dark:border-stone-700 bg-white dark:bg-stone-800'
+              }"
+            >
+              <span class="text-xs font-semibold flex items-center gap-2">
+                <span class="w-4 h-4 rounded flex items-center justify-center text-[10px] font-extrabold ${
+                  checked
+                    ? 'bg-forest-800 text-white dark:bg-amber-400 dark:text-stone-950'
+                    : 'border border-stone-400'
+                }">
+                  ${checked ? '✓' : ''}
+                </span>
+                <span>${addon.name}</span>
+              </span>
+              <span class="text-xs font-extrabold text-forest-700 dark:text-amber-300">+₱${addon.price}</span>
+            </button>
+          `;
+        })
+        .join('');
+    }
+
+    function toggleModalAddon(idx) {
+      if (selectedAddonIndices.has(idx)) {
+        selectedAddonIndices.delete(idx);
+      } else {
+        selectedAddonIndices.add(idx);
+      }
+      renderModalAddons();
+      updateModalTotalPrice();
+    }
+
+    function adjustModalQty(delta) {
+      modalQuantity = Math.max(1, modalQuantity + delta);
+      document.getElementById('modal-qty-display').textContent = modalQuantity;
+      updateModalTotalPrice();
+    }
+
+    function calculateModalUnitTotal() {
+      if (!currentModalItem) return 0;
+      const basePrice = currentModalItem.variants[selectedVariantIdx].price;
+      let addonsSum = 0;
+      selectedAddonIndices.forEach((idx) => {
+        addonsSum += currentModalItem.addons[idx].price;
+      });
+      return basePrice + addonsSum;
+    }
+
+    function updateModalTotalPrice() {
+      const total = calculateModalUnitTotal() * modalQuantity;
+      document.getElementById('modal-total-price').textContent = `₱${total.toFixed(0)}`;
+    }
+
+    function confirmAddItemToCart() {
+      if (!currentModalItem) return;
+
+      const variant = currentModalItem.variants[selectedVariantIdx];
+      const chosenAddons = Array.from(selectedAddonIndices).map((idx) => currentModalItem.addons[idx]);
+      const note = document.getElementById('modal-item-note').value.trim();
+      const unitPrice = calculateModalUnitTotal();
+
+      const addonNames = chosenAddons.map((a) => a.name).sort().join('|');
+      const flavorStr = selectedFlavors.join(', ');
+      const signature = `${currentModalItem.id}::${variant.label}::${flavorStr}::${addonNames}::${note}`;
+
+      const itemName = currentModalItem.name;
+      const qtyToSave = modalQuantity;
+      const wasEditing = Boolean(editingCartId);
+
+      if (editingCartId) {
+        const currentIdx = cart.findIndex((c) => c.cartId === editingCartId);
+        if (currentIdx > -1) {
+          const duplicateIdx = cart.findIndex(
+            (c) => c.signature === signature && c.cartId !== editingCartId
+          );
+          if (duplicateIdx > -1) {
+            cart[duplicateIdx].qty += qtyToSave;
+            cart.splice(currentIdx, 1);
+          } else {
+            cart[currentIdx] = {
+              ...cart[currentIdx],
+              signature,
+              itemId: currentModalItem.id,
+              name: currentModalItem.name,
+              category: currentModalItem.category,
+              variantLabel: variant.label,
+              basePrice: variant.price,
+              flavors: [...selectedFlavors],
+              addons: chosenAddons,
+              note,
+              unitPrice,
+              qty: qtyToSave
+            };
+          }
+        }
+      } else {
+        const existing = cart.find((c) => c.signature === signature);
+        if (existing) {
+          existing.qty += qtyToSave;
+        } else {
+          cart.push({
+            cartId: 'ci-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+            signature,
+            itemId: currentModalItem.id,
+            name: currentModalItem.name,
+            category: currentModalItem.category,
+            variantLabel: variant.label,
+            basePrice: variant.price,
+            flavors: [...selectedFlavors],
+            addons: chosenAddons,
+            note,
+            unitPrice,
+            qty: qtyToSave
+          });
+        }
+      }
+
+      closeItemModal();
+      renderCart();
+      showToast(wasEditing ? `Updated ${itemName}` : `Added ${qtyToSave}× ${itemName}`);
+    }
+
+    // =========================================================================
+    // 7. CART / TICKET MANAGEMENT & DELIVERY FEE
+    // =========================================================================
+    function setOrderType(type) {
+      orderType = type;
+      const dineBtn = document.getElementById('btn-order-dinein');
+      const takeBtn = document.getElementById('btn-order-takeout');
+
+      if (type === 'Dine-In') {
+        dineBtn.className = 'py-1.5 rounded-lg text-xs font-bold transition bg-forest-800 text-white shadow-xs';
+        takeBtn.className = 'py-1.5 rounded-lg text-xs font-bold transition text-espresso-800 dark:text-stone-300';
+      } else {
+        takeBtn.className = 'py-1.5 rounded-lg text-xs font-bold transition bg-forest-800 text-white shadow-xs';
+        dineBtn.className = 'py-1.5 rounded-lg text-xs font-bold transition text-espresso-800 dark:text-stone-300';
+      }
+    }
+
+    function toggleDeliveryFee() {
+      const checkbox = document.getElementById('delivery-fee-checkbox');
+      const input = document.getElementById('delivery-fee-input');
+      deliveryFeeEnabled = checkbox.checked;
+      input.disabled = !deliveryFeeEnabled;
+
+      if (deliveryFeeEnabled) {
+        input.focus();
+        handleDeliveryFeeInput();
+      } else {
+        deliveryFeeAmount = 0;
+        input.value = '';
+        updateCartTotalsUI();
+      }
+    }
+
+    function handleDeliveryFeeInput() {
+      const input = document.getElementById('delivery-fee-input');
+      if (!deliveryFeeEnabled) {
+        deliveryFeeAmount = 0;
+        updateCartTotalsUI();
+        return;
+      }
+      const parsed = parseFloat(input.value);
+      deliveryFeeAmount = !isNaN(parsed) && parsed > 0 ? parsed : 0;
+      updateCartTotalsUI();
+    }
+
+    function getActiveDeliveryFee() {
+      return deliveryFeeEnabled ? Math.max(0, deliveryFeeAmount) : 0;
+    }
+
+    function getCartSubtotal() {
+      return cart.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
+    }
+
+    function getCartTotalAmount() {
+      return getCartSubtotal() + getActiveDeliveryFee();
+    }
+
+    function updateCartTotalsUI() {
+      const subtotal = getCartSubtotal();
+      const delivFee = getActiveDeliveryFee();
+      const grandTotal = subtotal + delivFee;
+
+      const deliveryRow = document.getElementById('cart-delivery-row');
+      if (deliveryFeeEnabled) {
+        deliveryRow.classList.remove('hidden');
+        deliveryRow.classList.add('flex');
+      } else {
+        deliveryRow.classList.add('hidden');
+        deliveryRow.classList.remove('flex');
+      }
+
+      document.getElementById('cart-subtotal').textContent = `₱${subtotal.toFixed(2)}`;
+      document.getElementById('cart-delivery-fee').textContent = `₱${delivFee.toFixed(2)}`;
+      document.getElementById('cart-total').textContent = `₱${grandTotal.toFixed(2)}`;
+      document.getElementById('mobile-bar-total').textContent = `₱${grandTotal.toFixed(2)}`;
+    }
+
+    function renderCart() {
+      const container = document.getElementById('cart-items-container');
+      const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
+
+      document.getElementById('cart-item-badge').textContent = totalQty;
+      document.getElementById('mobile-bar-count').textContent = totalQty;
+      updateCartTotalsUI();
+
+      const checkoutBtn = document.getElementById('checkout-btn');
+      checkoutBtn.disabled = cart.length === 0;
+
+      if (cart.length === 0) {
+        container.innerHTML = `
+          <div class="h-full min-h-[200px] flex flex-col items-center justify-center text-center p-6 text-stone-400">
+            <svg class="w-12 h-12 mb-2 opacity-40" fill="none" stroke="currentColor" stroke-width="1.6" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <p class="text-sm font-bold text-stone-500 dark:text-stone-400">Ticket is empty</p>
+            <p class="text-xs mt-0.5">Tap any menu item on the left to start an order.</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = cart
+        .map((item) => {
+          const flavorBadge =
+            item.flavors && item.flavors.length > 0
+              ? `<div class="text-[11px] font-semibold text-forest-700 dark:text-amber-300 mt-0.5">Flavor: ${item.flavors.join(', ')}</div>`
+              : '';
+          const addonsList =
+            item.addons && item.addons.length > 0
+              ? `<div class="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5">+ ${item.addons.map((a) => `${a.name} (₱${a.price})`).join(', ')}</div>`
+              : '';
+          const noteLine = item.note
+            ? `<div class="text-[11px] italic text-amber-700 dark:text-amber-400 mt-0.5">"${item.note}"</div>`
+            : '';
+
+          return `
+            <div class="p-3 rounded-2xl bg-white dark:bg-stone-800/90 border border-cream-200 dark:border-stone-700/80 shadow-2xs">
+              <div class="flex items-start justify-between gap-2">
+                <div class="min-w-0">
+                  <h4 class="font-extrabold text-sm text-espresso-900 dark:text-stone-100 leading-tight">
+                    ${item.name}
+                  </h4>
+                  <span class="inline-block text-[11px] font-bold text-stone-500 dark:text-stone-400">
+                    ${item.variantLabel} • ₱${item.unitPrice} each
+                  </span>
+                  ${flavorBadge}
+                  ${addonsList}
+                  ${noteLine}
+                </div>
+                <span class="font-extrabold text-sm text-forest-800 dark:text-amber-300 shrink-0">
+                  ₱${(item.unitPrice * item.qty).toFixed(0)}
+                </span>
+              </div>
+
+              <div class="mt-2.5 pt-2 border-t border-cream-100 dark:border-stone-700/60 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onclick="openEditCartItemModal('${item.cartId}')"
+                    class="text-[11px] font-extrabold text-forest-700 dark:text-amber-300 hover:underline flex items-center gap-1"
+                  >
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    <span>Edit</span>
+                  </button>
+                  <button
+                    type="button"
+                    onclick="removeCartItem('${item.cartId}')"
+                    class="text-[11px] font-bold text-red-500 hover:underline"
+                  >
+                    Remove
+                  </button>
+                </div>
+                <div class="flex items-center gap-2 bg-cream-100 dark:bg-stone-900 rounded-xl p-0.5 border border-cream-200 dark:border-stone-700">
+                  <button
+                    onclick="updateCartItemQty('${item.cartId}', -1)"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-sm hover:bg-white dark:hover:bg-stone-800"
+                  >
+                    −
+                  </button>
+                  <span class="w-6 text-center text-xs font-extrabold">${item.qty}</span>
+                  <button
+                    onclick="updateCartItemQty('${item.cartId}', 1)"
+                    class="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-sm hover:bg-white dark:hover:bg-stone-800"
+                  >
+                    +
+                  </button>
+                </div>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function updateCartItemQty(cartId, delta) {
+      const idx = cart.findIndex((c) => c.cartId === cartId);
+      if (idx === -1) return;
+      cart[idx].qty += delta;
+      if (cart[idx].qty <= 0) {
+        cart.splice(idx, 1);
+      }
+      renderCart();
+    }
+
+    function removeCartItem(cartId) {
+      cart = cart.filter((c) => c.cartId !== cartId);
+      renderCart();
+    }
+
+    function resetDeliveryFeeControl() {
+      deliveryFeeEnabled = false;
+      deliveryFeeAmount = 0;
+      const checkbox = document.getElementById('delivery-fee-checkbox');
+      const input = document.getElementById('delivery-fee-input');
+      if (checkbox) checkbox.checked = false;
+      if (input) {
+        input.value = '';
+        input.disabled = true;
+      }
+    }
+
+    function clearCart() {
+      if (cart.length === 0 && !deliveryFeeEnabled) return;
+      cart = [];
+      resetDeliveryFeeControl();
+      document.getElementById('customer-note-input').value = '';
+      renderCart();
+      showToast('Ticket cleared');
+    }
+
+    function toggleMobileCart(open) {
+      const panel = document.getElementById('cart-panel');
+      const backdrop = document.getElementById('mobile-cart-backdrop');
+      if (open) {
+        panel.classList.remove('translate-y-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        panel.classList.add('translate-y-full');
+        backdrop.classList.add('hidden');
+      }
+    }
+
+    // =========================================================================
+    // 8. CHECKOUT & PAYMENT FLOW (CASH, GCASH, MAYA)
+    // =========================================================================
+    function openCheckoutModal() {
+      if (cart.length === 0) return;
+      toggleMobileCart(false);
+
+      const subtotal = getCartSubtotal();
+      const delivFee = getActiveDeliveryFee();
+      const total = subtotal + delivFee;
+      const customerNote = document.getElementById('customer-note-input').value.trim();
+
+      document.getElementById('checkout-total-display').textContent = `₱${total.toFixed(2)}`;
+      const metaParts = [orderType];
+      if (delivFee > 0) metaParts.push(`Delivery ₱${delivFee.toFixed(0)}`);
+      if (customerNote) metaParts.push(customerNote);
+      document.getElementById('checkout-order-meta').textContent = metaParts.join(' • ');
+
+      selectPaymentMethod('Cash');
+      document.getElementById('cash-tendered-input').value = '';
+      document.getElementById('ewallet-ref-input').value = '';
+      document.getElementById('checkout-error-msg').classList.add('hidden');
+      calculateChange();
+
+      const modal = document.getElementById('checkout-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeCheckoutModal() {
+      const modal = document.getElementById('checkout-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function selectPaymentMethod(method) {
+      selectedPaymentMethod = method;
+      ['Cash', 'GCash', 'Maya'].forEach((m) => {
+        const btn = document.getElementById(`pay-method-${m}`);
+        if (m === method) {
+          btn.className =
+            'py-3 px-2 rounded-2xl border-2 border-forest-700 bg-forest-800/10 dark:bg-amber-400/15 dark:border-amber-400 font-extrabold text-xs sm:text-sm flex flex-col items-center gap-1 transition';
+        } else {
+          btn.className =
+            'py-3 px-2 rounded-2xl border-2 border-cream-300 dark:border-stone-700 bg-white dark:bg-stone-800 font-extrabold text-xs sm:text-sm flex flex-col items-center gap-1 transition';
+        }
+      });
+
+      document.getElementById('cash-payment-section').classList.toggle('hidden', method !== 'Cash');
+      document.getElementById('ewallet-payment-section').classList.toggle('hidden', method === 'Cash');
+      document.getElementById('checkout-error-msg').classList.add('hidden');
+    }
+
+    function setExactCash() {
+      const total = getCartTotalAmount();
+      document.getElementById('cash-tendered-input').value = total;
+      calculateChange();
+    }
+
+    function addCashBill(amount) {
+      const input = document.getElementById('cash-tendered-input');
+      const current = parseFloat(input.value) || 0;
+      input.value = current + amount;
+      calculateChange();
+    }
+
+    function calculateChange() {
+      const total = getCartTotalAmount();
+      const tendered = parseFloat(document.getElementById('cash-tendered-input').value) || 0;
+      const change = Math.max(0, tendered - total);
+      document.getElementById('checkout-change-display').textContent = `₱${change.toFixed(2)}`;
+    }
+
+    function getNextOrderNumber() {
+      let counter = parseInt(localStorage.getItem(STORAGE_KEYS.ORDER_COUNTER) || '1000', 10);
+      counter += 1;
+      localStorage.setItem(STORAGE_KEYS.ORDER_COUNTER, String(counter));
+      return `AK-${counter}`;
+    }
+
+    function finalizeOrder() {
+      const subtotal = getCartSubtotal();
+      const delivFee = getActiveDeliveryFee();
+      const total = subtotal + delivFee;
+      const errorEl = document.getElementById('checkout-error-msg');
+      let amountTendered = total;
+      let changeDue = 0;
+      let referenceNo = '';
+
+      if (selectedPaymentMethod === 'Cash') {
+        const rawInput = document.getElementById('cash-tendered-input').value;
+        amountTendered = rawInput === '' ? total : parseFloat(rawInput);
+        if (isNaN(amountTendered) || amountTendered < total) {
+          errorEl.textContent = `Insufficient cash. Please enter at least ₱${total.toFixed(2)}.`;
+          errorEl.classList.remove('hidden');
+          return;
+        }
+        changeDue = amountTendered - total;
+      } else {
+        referenceNo = document.getElementById('ewallet-ref-input').value.trim();
+      }
+
+      const customerNote = document.getElementById('customer-note-input').value.trim();
+      const orderRecord = {
+        orderNo: getNextOrderNumber(),
+        timestamp: new Date().toISOString(),
+        orderType,
+        customerNote,
+        items: JSON.parse(JSON.stringify(cart)),
+        subtotal,
+        deliveryFee: delivFee,
+        total,
+        paymentMethod: selectedPaymentMethod,
+        amountTendered,
+        changeDue,
+        referenceNo
+      };
+
+      transactions.unshift(orderRecord);
+      saveTransactionsToStorage();
+      updateHeaderSalesBadge();
+
+      // Clear active ticket & delivery fee state
+      cart = [];
+      resetDeliveryFeeControl();
+      document.getElementById('customer-note-input').value = '';
+      renderCart();
+
+      closeCheckoutModal();
+      openReceiptModal(orderRecord);
+    }
+
+    // =========================================================================
+    // 9. RECEIPT GENERATION & PRINTING
+    // =========================================================================
+    function openReceiptModal(order) {
+      const dateObj = new Date(order.timestamp);
+      const formattedDate = dateObj.toLocaleDateString('en-PH', {
+        year: 'numeric',
+        month: 'short',
+        day: '2-digit'
+      });
+      const formattedTime = dateObj.toLocaleTimeString('en-PH', {
+        hour: '2-digit',
+        minute: '2-digit'
+      });
+
+      const itemsHtml = order.items
+        .map((item) => {
+          const lineTotal = (item.unitPrice * item.qty).toFixed(2);
+          const subLines = [];
+          if (item.flavors && item.flavors.length > 0) {
+            subLines.push(`  Flavor: ${item.flavors.join(', ')}`);
+          }
+          if (item.addons && item.addons.length > 0) {
+            item.addons.forEach((a) => subLines.push(`  + ${a.name} (₱${a.price})`));
+          }
+          if (item.note) {
+            subLines.push(`  Note: ${item.note}`);
+          }
+
+          return `
+            <div class="mb-2">
+              <div class="flex justify-between font-semibold">
+                <span>${item.qty}x ${item.name} (${item.variantLabel})</span>
+                <span>₱${lineTotal}</span>
+              </div>
+              ${subLines.map((l) => `<div class="text-[10px] text-stone-600 whitespace-pre-wrap">${l}</div>`).join('')}
+            </div>
+          `;
+        })
+        .join('');
+
+      const orderSubtotal = typeof order.subtotal === 'number' ? order.subtotal : order.total;
+      const orderDeliveryFee = typeof order.deliveryFee === 'number' ? order.deliveryFee : 0;
+
+      const deliveryReceiptLine =
+        orderDeliveryFee > 0
+          ? `
+            <div class="flex justify-between text-[11px]">
+              <span>Subtotal:</span>
+              <span>₱${orderSubtotal.toFixed(2)}</span>
+            </div>
+            <div class="flex justify-between text-[11px]">
+              <span>Delivery Fee:</span>
+              <span>₱${orderDeliveryFee.toFixed(2)}</span>
+            </div>
+          `
+          : '';
+
+      const paymentDetailsHtml =
+        order.paymentMethod === 'Cash'
+          ? `
+            <div class="flex justify-between">
+              <span>Cash Tendered:</span>
+              <span>₱${order.amountTendered.toFixed(2)}</span>
+            </div>
+            <div class="flex justify-between font-bold">
+              <span>Change:</span>
+              <span>₱${order.changeDue.toFixed(2)}</span>
+            </div>
+          `
+          : `
+            <div class="flex justify-between">
+              <span>Paid via:</span>
+              <span>${order.paymentMethod}</span>
+            </div>
+            ${
+              order.referenceNo
+                ? `<div class="flex justify-between"><span>Ref #:</span><span>${order.referenceNo}</span></div>`
+                : ''
+            }
+          `;
+
+      document.getElementById('printable-receipt-area').innerHTML = `
+        <div class="text-center border-b border-dashed border-stone-400 pb-2.5 mb-2.5">
+          <div class="font-bold text-base tracking-wide uppercase">A.Keopi Cafe</div>
+          <div class="text-[10px] text-stone-600">Coffee • Frappe • Rice Meals • Snacks</div>
+          <div class="text-[10px] text-stone-600 mt-1">ORDER #: <strong>${order.orderNo}</strong></div>
+          <div class="text-[10px] text-stone-600">${formattedDate} ${formattedTime}</div>
+          <div class="mt-1 inline-block px-2 py-0.5 border border-stone-800 font-bold text-[10px] uppercase">
+            ${order.orderType}${order.customerNote ? ` — ${order.customerNote}` : ''}
+          </div>
+        </div>
+
+        <div class="border-b border-dashed border-stone-400 pb-2 mb-2">
+          ${itemsHtml}
+        </div>
+
+        <div class="space-y-1 border-b border-dashed border-stone-400 pb-2.5 mb-2.5">
+          ${deliveryReceiptLine}
+          <div class="flex justify-between text-sm font-bold">
+            <span>TOTAL:</span>
+            <span>₱${order.total.toFixed(2)}</span>
+          </div>
+          <div class="flex justify-between">
+            <span>Payment Method:</span>
+            <span>${order.paymentMethod}</span>
+          </div>
+          ${paymentDetailsHtml}
+        </div>
+
+        <div class="text-center text-[10px] text-stone-600 pt-1">
+          <p class="font-bold text-stone-800">Thank you for visiting A.Keopi Cafe!</p>
+          <p>Please come again ☕</p>
+        </div>
+      `;
+
+      const modal = document.getElementById('receipt-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeReceiptModal() {
+      const modal = document.getElementById('receipt-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    // =========================================================================
+    // 10. TRANSACTION HISTORY & SALES REPORTING
+    // =========================================================================
+    function updateHeaderSalesBadge() {
+      const totalSales = transactions.reduce((sum, tx) => sum + tx.total, 0);
+      document.getElementById('header-sales-badge').textContent = `₱${totalSales.toLocaleString('en-PH')}`;
+    }
+
+    function openHistoryModal() {
+      pendingDeleteOrderIndex = null;
+      renderHistoryModal();
+      const modal = document.getElementById('history-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeHistoryModal() {
+      pendingDeleteOrderIndex = null;
+      const modal = document.getElementById('history-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function renderHistoryModal() {
+      let totalSales = 0;
+      let cashSales = 0;
+      let gcashSales = 0;
+      let mayaSales = 0;
+
+      transactions.forEach((tx) => {
+        totalSales += tx.total;
+        if (tx.paymentMethod === 'Cash') cashSales += tx.total;
+        if (tx.paymentMethod === 'GCash') gcashSales += tx.total;
+        if (tx.paymentMethod === 'Maya') mayaSales += tx.total;
+      });
+
+      document.getElementById('stat-total-sales').textContent = `₱${totalSales.toLocaleString('en-PH', { minimumFractionDigits: 2 })}`;
+      document.getElementById('stat-order-count').textContent = transactions.length;
+      document.getElementById('stat-cash-sales').textContent = `₱${cashSales.toLocaleString('en-PH')}`;
+      document.getElementById('stat-gcash-sales').textContent = `₱${gcashSales.toLocaleString('en-PH')}`;
+      document.getElementById('stat-maya-sales').textContent = `₱${mayaSales.toLocaleString('en-PH')}`;
+
+      // Reset clear button state
+      document.getElementById('clear-history-confirm-group').innerHTML = `
+        <button
+          onclick="promptClearHistory()"
+          class="px-4 py-2.5 rounded-xl bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900 text-xs font-bold hover:bg-red-100 transition"
+        >
+          Clear History
+        </button>
+      `;
+
+      const listEl = document.getElementById('history-list-container');
+      if (transactions.length === 0) {
+        listEl.innerHTML = `
+          <div class="py-12 text-center text-stone-400">
+            <p class="text-sm font-bold">No completed transactions yet</p>
+            <p class="text-xs mt-1">Completed orders will appear here with reprintable receipts.</p>
+          </div>
+        `;
+        return;
+      }
+
+      listEl.innerHTML = transactions
+        .map((tx, idx) => {
+          const dt = new Date(tx.timestamp).toLocaleString('en-PH', {
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+          const itemSummary = tx.items.map((i) => `${i.qty}× ${i.name}`).join(', ');
+          const delivBadge =
+            tx.deliveryFee && tx.deliveryFee > 0
+              ? `<span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">Delivery ₱${tx.deliveryFee.toFixed(0)}</span>`
+              : '';
+          const isConfirmingDelete = pendingDeleteOrderIndex === idx;
+
+          const actionControls = isConfirmingDelete
+            ? `
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onclick="confirmDeleteTransaction(${idx})"
+                  class="px-2.5 py-1.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-[11px] font-extrabold transition"
+                >
+                  Confirm
+                </button>
+                <button
+                  type="button"
+                  onclick="cancelDeleteTransaction()"
+                  class="px-2.5 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-700 text-xs font-bold hover:bg-stone-300 dark:hover:bg-stone-600 transition"
+                >
+                  Cancel
+                </button>
+              </div>
+            `
+            : `
+              <div class="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onclick="reprintPastOrder(${idx})"
+                  class="px-3 py-1.5 rounded-xl bg-cream-200 dark:bg-stone-700 hover:bg-cream-300 dark:hover:bg-stone-600 text-xs font-extrabold transition"
+                >
+                  View / Reprint
+                </button>
+                <button
+                  type="button"
+                  onclick="promptDeleteTransaction(${idx})"
+                  title="Delete / Cancel Order"
+                  class="px-2.5 py-1.5 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-900/60 hover:bg-red-100 dark:hover:bg-red-900/60 text-xs font-bold transition"
+                >
+                  Delete
+                </button>
+              </div>
+            `;
+
+          return `
+            <div class="p-3.5 rounded-2xl bg-white dark:bg-stone-800 border border-cream-200 dark:border-stone-700 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div class="min-w-0">
+                <div class="flex flex-wrap items-center gap-2">
+                  <span class="font-mono font-extrabold text-xs px-2 py-0.5 rounded bg-forest-800 text-white dark:bg-amber-500 dark:text-stone-950">
+                    ${tx.orderNo}
+                  </span>
+                  <span class="text-xs font-bold text-stone-500 dark:text-stone-400">${dt}</span>
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-cream-100 dark:bg-stone-700">
+                    ${tx.orderType}${tx.customerNote ? ` • ${tx.customerNote}` : ''}
+                  </span>
+                  ${delivBadge}
+                  <span class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">
+                    ${tx.paymentMethod}
+                  </span>
+                </div>
+                <p class="text-xs text-espresso-800 dark:text-stone-300 mt-1.5 truncate">
+                  ${itemSummary}
+                </p>
+              </div>
+
+              <div class="flex items-center justify-between sm:justify-end gap-3 shrink-0">
+                <span class="font-extrabold text-base text-forest-800 dark:text-amber-300">
+                  ₱${tx.total.toFixed(2)}
+                </span>
+                ${actionControls}
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function promptDeleteTransaction(index) {
+      pendingDeleteOrderIndex = index;
+      renderHistoryModal();
+    }
+
+    function cancelDeleteTransaction() {
+      pendingDeleteOrderIndex = null;
+      renderHistoryModal();
+    }
+
+    function confirmDeleteTransaction(index) {
+      const removed = transactions[index];
+      if (!removed) return;
+
+      const removedOrderNo = removed.orderNo;
+      transactions.splice(index, 1);
+      pendingDeleteOrderIndex = null;
+
+      saveTransactionsToStorage();
+      updateHeaderSalesBadge();
+      renderHistoryModal();
+      showToast(`Deleted cancelled order ${removedOrderNo}`);
+    }
+
+    function reprintPastOrder(index) {
+      const tx = transactions[index];
+      if (!tx) return;
+      closeHistoryModal();
+      openReceiptModal(tx);
+    }
+
+    function promptClearHistory() {
+      if (transactions.length === 0) return;
+      document.getElementById('clear-history-confirm-group').innerHTML = `
+        <span class="text-xs font-bold text-red-600 dark:text-red-400">Delete all sales logs?</span>
+        <button
+          onclick="confirmClearHistory()"
+          class="px-3 py-2 rounded-xl bg-red-600 text-white text-xs font-extrabold hover:bg-red-700"
+        >
+          Yes, Clear All
+        </button>
+        <button
+          onclick="renderHistoryModal()"
+          class="px-3 py-2 rounded-xl bg-stone-200 dark:bg-stone-700 text-xs font-bold"
+        >
+          Cancel
+        </button>
+      `;
+    }
+
+    function confirmClearHistory() {
+      transactions = [];
+      pendingDeleteOrderIndex = null;
+      saveTransactionsToStorage();
+      updateHeaderSalesBadge();
+      renderHistoryModal();
+      showToast('Transaction history cleared');
+    }
+
+    function exportTransactionsCSV() {
+      if (transactions.length === 0) {
+        showToast('No transactions to export');
+        return;
+      }
+      const headers = ['Order No', 'Date Time', 'Order Type', 'Customer/Table', 'Payment Method', 'Subtotal (PHP)', 'Delivery Fee (PHP)', 'Total (PHP)', 'Items'];
+      const rows = transactions.map((tx) => {
+        const itemsText = tx.items.map((i) => `${i.qty}x ${i.name} (${i.variantLabel})`).join(' | ');
+        const sub = typeof tx.subtotal === 'number' ? tx.subtotal : tx.total;
+        const deliv = typeof tx.deliveryFee === 'number' ? tx.deliveryFee : 0;
+        return [
+          tx.orderNo,
+          `"${new Date(tx.timestamp).toLocaleString('en-PH')}"`,
+          tx.orderType,
+          `"${tx.customerNote || ''}"`,
+          tx.paymentMethod,
+          sub.toFixed(2),
+          deliv.toFixed(2),
+          tx.total.toFixed(2),
+          `"${itemsText.replace(/"/g, '""')}"`
+        ].join(',');
+      });
+
+      const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows].join('\n');
+      const encodedUri = encodeURI(csvContent);
+      const link = document.createElement('a');
+      link.setAttribute('href', encodedUri);
+      link.setAttribute('download', `AKeopi_Cafe_Sales_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      showToast('CSV sales report downloaded');
+    }
+
+    // =========================================================================
+    // 11. MANAGE MENU (ADD, EDIT, TOGGLE AVAILABILITY, RESET DEFAULT)
+    // =========================================================================
+    function populateManageCategoryDropdown() {
+      const select = document.getElementById('form-item-category');
+      select.innerHTML = CATEGORIES.filter((c) => c !== 'All')
+        .map((c) => `<option value="${c}">${c}</option>`)
+        .join('');
+    }
+
+    function openManageMenuModal() {
+      resetMenuItemForm();
+      renderManageMenuList();
+      const modal = document.getElementById('manage-menu-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeManageMenuModal() {
+      const modal = document.getElementById('manage-menu-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function getDefaultAddonsForCategory(category) {
+      if (['Classic Coffee', 'Special Coffee', 'Strawberry & Matcha', 'Non-Coffee'].includes(category)) {
+        return COFFEE_DRINK_ADDONS;
+      }
+      if (['Soda, Frizz & Refresher', 'Frappe Series'].includes(category)) {
+        return SODA_FRAPPE_ADDONS;
+      }
+      if (category === 'Rice Meal') return RICE_MEAL_ADDONS;
+      if (category === 'Korean Noodles') return NOODLES_ADDONS;
+      if (category === 'Burger & Sandwich') return BURGER_SANDWICH_ADDONS;
+      if (category === 'Fries & Snacks') return FRIES_SNACKS_ADDONS;
+      return [];
+    }
+
+    function saveMenuItemForm(e) {
+      e.preventDefault();
+      const editId = document.getElementById('edit-item-id').value;
+      const name = document.getElementById('form-item-name').value.trim();
+      const category = document.getElementById('form-item-category').value;
+      const variantsRaw = document.getElementById('form-item-variants').value.trim();
+
+      const parsedVariants = variantsRaw
+        .split(',')
+        .map((part) => {
+          const trimmed = part.trim();
+          if (!trimmed) return null;
+          if (trimmed.includes(':')) {
+            const [label, priceStr] = trimmed.split(':');
+            const price = parseFloat(priceStr);
+            if (!label.trim() || isNaN(price)) return null;
+            return { label: label.trim(), price };
+          } else {
+            const price = parseFloat(trimmed);
+            if (isNaN(price)) return null;
+            return { label: 'Regular', price };
+          }
+        })
+        .filter(Boolean);
+
+      if (!name || parsedVariants.length === 0) {
+        showToast('Enter valid item name and price(s)');
+        return;
+      }
+
+      if (editId) {
+        const idx = menuItems.findIndex((i) => i.id === editId);
+        if (idx > -1) {
+          menuItems[idx].name = name;
+          menuItems[idx].category = category;
+          menuItems[idx].variants = parsedVariants;
+        }
+        showToast(`Updated "${name}"`);
+      } else {
+        menuItems.unshift({
+          id: 'custom-' + Date.now(),
+          category,
+          name,
+          variants: parsedVariants,
+          addons: getDefaultAddonsForCategory(category),
+          available: true
+        });
+        showToast(`Added "${name}" to menu`);
+      }
+
+      saveMenuToStorage();
+      resetMenuItemForm();
+      renderManageMenuList();
+      renderCategoryTabs();
+      renderMenuGrid();
+    }
+
+    function editMenuItem(itemId) {
+      const item = menuItems.find((i) => i.id === itemId);
+      if (!item) return;
+
+      document.getElementById('edit-item-id').value = item.id;
+      document.getElementById('form-item-name').value = item.name;
+      document.getElementById('form-item-category').value = item.category;
+      document.getElementById('form-item-variants').value = item.variants
+        .map((v) => `${v.label}:${v.price}`)
+        .join(', ');
+      document.getElementById('form-submit-btn').textContent = 'Update';
+    }
+
+    function resetMenuItemForm() {
+      document.getElementById('edit-item-id').value = '';
+      document.getElementById('form-item-name').value = '';
+      document.getElementById('form-item-variants').value = '';
+      document.getElementById('form-submit-btn').textContent = 'Save Item';
+    }
+
+    function toggleItemAvailability(itemId) {
+      const item = menuItems.find((i) => i.id === itemId);
+      if (!item) return;
+      item.available = item.available === false ? true : false;
+      saveMenuToStorage();
+      renderManageMenuList();
+      renderMenuGrid();
+      showToast(`${item.name}: ${item.available ? 'Available' : 'Marked Sold Out'}`);
+    }
+
+    function deleteMenuItem(itemId) {
+      menuItems = menuItems.filter((i) => i.id !== itemId);
+      saveMenuToStorage();
+      renderManageMenuList();
+      renderCategoryTabs();
+      renderMenuGrid();
+      showToast('Menu item deleted');
+    }
+
+    function renderManageMenuList() {
+      const filter = (document.getElementById('manage-search-input').value || '').toLowerCase();
+      const listEl = document.getElementById('manage-menu-list');
+
+      // Reset default menu button group
+      document.getElementById('reset-menu-confirm-group').innerHTML = `
+        <button
+          onclick="promptResetDefaultMenu()"
+          class="px-3 py-1.5 rounded-xl bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800 text-xs font-bold hover:bg-amber-200 transition"
+        >
+          Reset Default Menu
+        </button>
+      `;
+
+      const filtered = menuItems.filter(
+        (i) => i.name.toLowerCase().includes(filter) || i.category.toLowerCase().includes(filter)
+      );
+
+      listEl.innerHTML = filtered
+        .map((item) => {
+          const isAvailable = item.available !== false;
+          const variantsStr = item.variants.map((v) => `${v.label} ₱${v.price}`).join(' • ');
+          return `
+            <div class="p-3 rounded-2xl bg-white dark:bg-stone-800 border border-cream-200 dark:border-stone-700 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div class="min-w-0">
+                <div class="flex items-center gap-2">
+                  <span class="font-extrabold text-xs sm:text-sm ${isAvailable ? '' : 'line-through text-stone-400'}">
+                    ${item.name}
+                  </span>
+                  <span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cream-100 dark:bg-stone-700 text-stone-600 dark:text-stone-300">
+                    ${item.category}
+                  </span>
+                </div>
+                <p class="text-[11px] text-stone-500 dark:text-stone-400 mt-0.5 truncate">${variantsStr}</p>
+              </div>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <button
+                  onclick="toggleItemAvailability('${item.id}')"
+                  class="px-2.5 py-1.5 rounded-xl text-[11px] font-extrabold border transition ${
+                    isAvailable
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border-emerald-800'
+                      : 'bg-red-50 text-red-600 border-red-200 dark:bg-red-950/50 dark:text-red-300 dark:border-red-800'
+                  }"
+                >
+                  ${isAvailable ? 'In Stock' : 'Sold Out'}
+                </button>
+                <button
+                  onclick="editMenuItem('${item.id}')"
+                  class="px-2.5 py-1.5 rounded-xl bg-cream-200 dark:bg-stone-700 text-[11px] font-bold hover:bg-cream-300"
+                >
+                  Edit
+                </button>
+                <button
+                  onclick="deleteMenuItem('${item.id}')"
+                  class="px-2.5 py-1.5 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 text-[11px] font-bold hover:bg-red-100"
+                >
+                  Delete
+                </button>
+              </div>
+            </div>
+          `;
+        })
+        .join('');
+    }
+
+    function promptResetDefaultMenu() {
+      document.getElementById('reset-menu-confirm-group').innerHTML = `
+        <span class="text-xs font-bold text-amber-700 dark:text-amber-300 mr-1">Restore original menu?</span>
+        <button
+          onclick="confirmResetDefaultMenu()"
+          class="px-3 py-1.5 rounded-xl bg-forest-800 text-white text-xs font-extrabold"
+        >
+          Yes, Restore
+        </button>
+        <button
+          onclick="renderManageMenuList()"
+          class="px-3 py-1.5 rounded-xl bg-stone-200 dark:bg-stone-700 text-xs font-bold"
+        >
+          Cancel
+        </button>
+      `;
+    }
+
+    function confirmResetDefaultMenu() {
+      menuItems = JSON.parse(JSON.stringify(DEFAULT_MENU_ITEMS));
+      saveMenuToStorage();
+      renderManageMenuList();
+      renderCategoryTabs();
+      renderMenuGrid();
+      showToast('Restored full A.Keopi Cafe default menu');
+    }
+
+    // =========================================================================
+    // 12. TOAST FEEDBACK HELPER
+    // =========================================================================
+    let toastTimeout = null;
+    function showToast(msg) {
+      const banner = document.getElementById('toast-banner');
+      document.getElementById('toast-message').textContent = msg;
+      banner.classList.remove('opacity-0', 'translate-y-[-10px]');
+      banner.classList.add('opacity-100', 'translate-y-0');
+
+      clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => {
+        banner.classList.add('opacity-0', 'translate-y-[-10px]');
+        banner.classList.remove('opacity-100', 'translate-y-0');
+      }, 2200);
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js').catch(() => {});
+      });
+    }
+  </script>
+</body>
+</html>
