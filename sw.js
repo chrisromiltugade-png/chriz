@@ -1,5 +1,10 @@
-const CACHE_NAME = 'akeopi-pos-v2';
-const APP_SHELL = ['./A.keopicafePOS.html', './manifest.webmanifest', './icon.png'];
+const CACHE_NAME = 'akeopi-pos-v4';
+const APP_SHELL = [
+  './A.keopicafePOS.html',
+  './manifest.webmanifest',
+  './icon.png',
+  './A-keopicafe-logo.jpg'
+];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(APP_SHELL)));
