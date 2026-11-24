@@ -255,7 +255,7 @@
       onclick="toggleMobileCart(true)"
       aria-controls="cart-panel"
       aria-expanded="false"
-      class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[35] items-center gap-2 rounded-l-2xl bg-forest-800 px-3 py-4 font-bold text-white shadow-xl hover:bg-forest-700"
+      class="fixed right-0 top-1/2 z-[35] flex -translate-y-1/2 items-center gap-1.5 rounded-l-2xl bg-forest-800 px-2.5 py-3 text-sm font-bold text-white shadow-xl hover:bg-forest-700 sm:gap-2 sm:px-3 sm:py-4"
     >
       <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l2.4 12.2a2 2 0 002 1.6h8.8a2 2 0 002-1.6L22 8H6" />
@@ -263,12 +263,12 @@
         <circle cx="18" cy="21" r="1" />
       </svg>
       <span>Order</span>
-      <span id="desktop-order-count" class="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-extrabold text-stone-950">0</span>
+      <span id="order-count" class="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-extrabold text-stone-950">0</span>
     </button>
 
     <aside
       id="cart-panel"
-      class="fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col shrink-0 rounded-t-3xl border-t border-cream-200 bg-cream-50 shadow-2xl transition-transform duration-300 ease-out translate-y-full dark:border-stone-800 dark:bg-stone-900 lg:inset-y-[61px] lg:left-auto lg:right-0 lg:h-[calc(100vh-61px)] lg:max-h-none lg:w-[400px] lg:translate-y-0 lg:translate-x-full lg:rounded-none lg:rounded-l-2xl lg:border-l lg:border-t-0 lg:shadow-2xl xl:w-[430px]"
+      class="fixed inset-y-0 right-0 z-50 flex h-full max-h-none w-[90vw] max-w-[430px] shrink-0 translate-x-full flex-col border-l border-cream-200 bg-cream-50 shadow-2xl transition-transform duration-300 ease-out dark:border-stone-800 dark:bg-stone-900 lg:inset-y-[61px] lg:h-[calc(100vh-61px)] lg:w-[400px] lg:translate-x-full lg:rounded-l-2xl lg:shadow-2xl xl:w-[430px]"
     >
       <!-- Mobile Drawer Handle -->
       <div class="lg:hidden flex justify-center pt-2.5 pb-1" onclick="toggleMobileCart(false)">
@@ -389,22 +389,6 @@
         </button>
       </div>
     </aside>
-  </div>
-
-  <!-- MOBILE FLOATING BOTTOM CART BAR -->
-  <div class="lg:hidden fixed bottom-3 inset-x-3 z-30">
-    <button
-      onclick="toggleMobileCart(true)"
-      class="w-full py-3 px-4 rounded-2xl bg-forest-800 text-white shadow-xl shadow-black/25 flex items-center justify-between border border-forest-700"
-    >
-      <div class="flex items-center gap-2.5">
-        <span id="mobile-bar-count" class="px-2.5 py-0.5 rounded-full bg-amber-400 text-stone-950 font-extrabold text-xs">
-          0
-        </span>
-        <span class="font-bold text-sm">View Current Order</span>
-      </div>
-      <span id="mobile-bar-total" class="font-extrabold text-base text-amber-300">₱0.00</span>
-    </button>
   </div>
 
   <!-- ==================== MODAL 1: ITEM VARIANT & ADD-ONS SELECTOR ==================== -->
@@ -3010,7 +2994,6 @@
       document.getElementById('cart-subtotal').textContent = `₱${subtotal.toFixed(2)}`;
       document.getElementById('cart-delivery-fee').textContent = `₱${delivFee.toFixed(2)}`;
       document.getElementById('cart-total').textContent = `₱${grandTotal.toFixed(2)}`;
-      document.getElementById('mobile-bar-total').textContent = `₱${grandTotal.toFixed(2)}`;
     }
 
     function renderCart() {
@@ -3018,8 +3001,7 @@
       const totalQty = cart.reduce((sum, item) => sum + item.qty, 0);
 
       document.getElementById('cart-item-badge').textContent = totalQty;
-      document.getElementById('mobile-bar-count').textContent = totalQty;
-      document.getElementById('desktop-order-count').textContent = totalQty;
+      document.getElementById('order-count').textContent = totalQty;
       updateCartTotalsUI();
 
       const checkoutBtn = document.getElementById('checkout-btn');
@@ -3154,11 +3136,11 @@
       const backdrop = document.getElementById('mobile-cart-backdrop');
       const desktopToggle = document.getElementById('desktop-cart-toggle');
       if (open) {
-        panel.classList.remove('translate-y-full');
+        panel.classList.remove('translate-x-full');
         panel.classList.remove('lg:translate-x-full');
         backdrop.classList.remove('hidden');
       } else {
-        panel.classList.add('translate-y-full');
+        panel.classList.add('translate-x-full');
         panel.classList.add('lg:translate-x-full');
         backdrop.classList.add('hidden');
       }
