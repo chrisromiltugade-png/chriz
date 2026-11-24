@@ -212,15 +212,50 @@
   <!-- ==================== MAIN WORKSPACE LAYOUT ==================== -->
   <div class="max-w-[1600px] mx-auto flex flex-col lg:flex-row min-h-[calc(100vh-68px)]">
 
-    <!-- LEFT / CENTER PANEL: CATEGORIES & MENU GRID -->
-    <main class="flex-1 flex flex-col min-w-0 pb-24 lg:pb-6">
-      <!-- Category Filter Tabs -->
-      <div class="sticky top-[106px] lg:top-[61px] z-20 bg-cream-100/95 dark:bg-stone-950/95 backdrop-blur border-b border-cream-200 dark:border-stone-800 px-3 sm:px-5 py-2.5">
-        <div id="category-tabs" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-          <!-- Populated dynamically via JS -->
-        </div>
-      </div>
+    <div
+      id="category-backdrop"
+      onclick="toggleCategoryPanel(false)"
+      class="fixed inset-0 z-40 hidden bg-black/50 backdrop-blur-xs lg:hidden"
+    ></div>
 
+    <button
+      id="category-toggle"
+      type="button"
+      onclick="toggleCategoryPanel(true)"
+      aria-controls="category-panel"
+      aria-expanded="false"
+      class="fixed left-0 top-1/2 z-[35] flex -translate-y-1/2 items-center gap-1.5 rounded-r-2xl bg-forest-800 px-2.5 py-3 text-sm font-bold text-white shadow-xl hover:bg-forest-700 lg:hidden sm:gap-2 sm:px-3 sm:py-4"
+    >
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+      </svg>
+      <span>Menu</span>
+    </button>
+
+    <aside
+      id="category-panel"
+      class="fixed inset-y-0 left-0 z-50 flex h-full w-[82vw] max-w-[280px] -translate-x-full flex-col border-r border-cream-200 bg-cream-50 shadow-2xl transition-transform duration-300 ease-out dark:border-stone-800 dark:bg-stone-900 lg:sticky lg:top-[61px] lg:z-auto lg:h-[calc(100vh-61px)] lg:w-64 lg:max-w-none lg:translate-x-0 lg:shadow-none"
+    >
+      <div class="flex items-center justify-between border-b border-cream-200 px-4 py-4 dark:border-stone-800">
+        <h2 class="font-extrabold text-forest-800 dark:text-amber-200">Menu Categories</h2>
+        <button
+          type="button"
+          onclick="toggleCategoryPanel(false)"
+          aria-label="Close menu categories"
+          class="rounded-lg p-1.5 text-stone-500 hover:bg-stone-200 dark:hover:bg-stone-800 lg:hidden"
+        >
+          <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+      <nav id="category-tabs" class="flex flex-1 flex-col gap-2 overflow-y-auto p-3" aria-label="Menu categories">
+        <!-- Populated dynamically via JS -->
+      </nav>
+    </aside>
+
+    <!-- MENU GRID -->
+    <main class="flex min-w-0 flex-1 flex-col pb-6">
       <!-- Category Header Info & Quick Count -->
       <div class="px-3 sm:px-5 pt-4 pb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
@@ -2442,6 +2477,20 @@
     // =========================================================================
     // 5. CATEGORY TABS & MENU GRID RENDERING
     // =========================================================================
+    function toggleCategoryPanel(open) {
+      const panel = document.getElementById('category-panel');
+      const backdrop = document.getElementById('category-backdrop');
+      const toggle = document.getElementById('category-toggle');
+      if (open) {
+        panel.classList.remove('-translate-x-full');
+        backdrop.classList.remove('hidden');
+      } else {
+        panel.classList.add('-translate-x-full');
+        backdrop.classList.add('hidden');
+      }
+      toggle.setAttribute('aria-expanded', String(open));
+    }
+
     function renderCategoryTabs() {
       const container = document.getElementById('category-tabs');
       container.innerHTML = CATEGORIES.map((cat) => {
@@ -2452,7 +2501,7 @@
         return `
           <button
             onclick="selectCategory('${cat.replace(/'/g, "\\'")}')"
-            class="shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 border ${
+            class="w-full justify-between px-3.5 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition flex items-center gap-1.5 border ${
               isActive
                 ? 'bg-forest-800 text-white border-forest-800 dark:bg-amber-500 dark:text-stone-950 dark:border-amber-500 shadow-sm'
                 : 'bg-white dark:bg-stone-900 text-espresso-800 dark:text-stone-300 border-cream-300 dark:border-stone-800 hover:bg-cream-200/60 dark:hover:bg-stone-800'
@@ -2473,6 +2522,7 @@
       activeCategory = category;
       renderCategoryTabs();
       renderMenuGrid();
+      toggleCategoryPanel(false);
     }
 
     function clearSearch() {
