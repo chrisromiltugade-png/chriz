@@ -242,17 +242,33 @@
       </div>
     </main>
 
-    <!-- RIGHT SIDEBAR (DESKTOP) / SLIDE-OVER DRAWER (MOBILE): CURRENT TICKET -->
-    <!-- Mobile Backdrop -->
+    <!-- CURRENT TICKET DRAWER -->
     <div
       id="mobile-cart-backdrop"
       onclick="toggleMobileCart(false)"
-      class="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 hidden lg:hidden transition-opacity"
+      class="fixed inset-0 bg-black/50 backdrop-blur-xs z-40 hidden transition-opacity"
     ></div>
+
+    <button
+      id="desktop-cart-toggle"
+      type="button"
+      onclick="toggleMobileCart(true)"
+      aria-controls="cart-panel"
+      aria-expanded="false"
+      class="hidden lg:flex fixed right-0 top-1/2 -translate-y-1/2 z-[35] items-center gap-2 rounded-l-2xl bg-forest-800 px-3 py-4 font-bold text-white shadow-xl hover:bg-forest-700"
+    >
+      <svg class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h2l2.4 12.2a2 2 0 002 1.6h8.8a2 2 0 002-1.6L22 8H6" />
+        <circle cx="10" cy="21" r="1" />
+        <circle cx="18" cy="21" r="1" />
+      </svg>
+      <span>Order</span>
+      <span id="desktop-order-count" class="rounded-full bg-amber-400 px-2 py-0.5 text-xs font-extrabold text-stone-950">0</span>
+    </button>
 
     <aside
       id="cart-panel"
-      class="fixed inset-x-0 bottom-0 z-50 lg:static lg:z-auto lg:w-[400px] xl:w-[430px] shrink-0 bg-cream-50 dark:bg-stone-900 border-t lg:border-t-0 lg:border-l border-cream-200 dark:border-stone-800 rounded-t-3xl lg:rounded-none shadow-2xl lg:shadow-none flex flex-col max-h-[88vh] lg:max-h-[calc(100vh-61px)] lg:sticky lg:top-[61px] translate-y-full lg:translate-y-0 transition-transform duration-300 ease-out"
+      class="fixed inset-x-0 bottom-0 z-50 flex max-h-[88vh] flex-col shrink-0 rounded-t-3xl border-t border-cream-200 bg-cream-50 shadow-2xl transition-transform duration-300 ease-out translate-y-full dark:border-stone-800 dark:bg-stone-900 lg:inset-y-[61px] lg:left-auto lg:right-0 lg:h-[calc(100vh-61px)] lg:max-h-none lg:w-[400px] lg:translate-y-0 lg:translate-x-full lg:rounded-none lg:rounded-l-2xl lg:border-l lg:border-t-0 lg:shadow-2xl xl:w-[430px]"
     >
       <!-- Mobile Drawer Handle -->
       <div class="lg:hidden flex justify-center pt-2.5 pb-1" onclick="toggleMobileCart(false)">
@@ -3003,6 +3019,7 @@
 
       document.getElementById('cart-item-badge').textContent = totalQty;
       document.getElementById('mobile-bar-count').textContent = totalQty;
+      document.getElementById('desktop-order-count').textContent = totalQty;
       updateCartTotalsUI();
 
       const checkoutBtn = document.getElementById('checkout-btn');
@@ -3135,13 +3152,17 @@
     function toggleMobileCart(open) {
       const panel = document.getElementById('cart-panel');
       const backdrop = document.getElementById('mobile-cart-backdrop');
+      const desktopToggle = document.getElementById('desktop-cart-toggle');
       if (open) {
         panel.classList.remove('translate-y-full');
+        panel.classList.remove('lg:translate-x-full');
         backdrop.classList.remove('hidden');
       } else {
         panel.classList.add('translate-y-full');
+        panel.classList.add('lg:translate-x-full');
         backdrop.classList.add('hidden');
       }
+      desktopToggle.setAttribute('aria-expanded', String(open));
     }
 
     // =========================================================================
